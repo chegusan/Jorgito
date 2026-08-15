@@ -4,16 +4,23 @@ Keep this file short. Replace stale status rather than accumulating a diary.
 
 ## Current phase
 
-Phase 1 — Minimal visual proof (not started)
+Phase 1 — Minimal visual proof (BLOCKED — see
+`docs/phase_results/PHASE_1_RESULT.md`)
 
 ## Last gate
 
-Status: Phase 0 — PASS (see `docs/phase_results/PHASE_0_RESULT.md`)
+Status: Phase 1 — BLOCKED (see `docs/phase_results/PHASE_1_RESULT.md`).
+Phase 0 — PASS (see `docs/phase_results/PHASE_0_RESULT.md`).
 
 ## Active objective
 
 Generate and validate `idle`, `review`, `running` for Jorgito using the
-canonical reference image, per Phase 1 of `Jorgito  Plan.md`.
+canonical reference image, per Phase 1 of `Jorgito  Plan.md`. Blocked: both
+reference-capable image providers configured in this environment
+(`openai`, `openrouter`) fail before producing any image (OpenAI billing
+hard limit; OpenRouter 401 missing-auth). Zero of the 3-generation budget
+has been spent. Needs a user decision (fix billing, fix the OpenRouter
+credential, or configure a third provider) before retrying.
 
 ## Confirmed decisions
 
@@ -34,25 +41,39 @@ canonical reference image, per Phase 1 of `Jorgito  Plan.md`.
   pipeline (`agent.pet.generate.orchestrate`, reachable via `/hatch` or
   direct Python call with `reference_images=[...]`) rather than an external
   Codex `hatch-pet` skill, which is not installed/available on this machine.
+- Reference-image grounding for a *subset* of states (not the full 9-row
+  atlas) is done by calling `imagegen.generate()` / `atlas.*` /
+  `store.register_local_pet()` directly — one call per requested state —
+  rather than `orchestrate.hatch_pet()`, which always generates all 8
+  non-mirrored rows in a single pass and would blow a 3-generation budget.
+  See `scripts/generate_phase1.py`.
 
 ## Open questions
 
-- How to pass `assets/reference/jorgito_canonical.png` as a grounding
-  reference into the pet-generation pipeline: extend `_handle_hatch_command`
-  with a `--reference` flag, or call `orchestrate.generate_base_drafts()` /
-  `hatch_pet()` directly from a small script. Decide during Phase 1 planning.
-- Which `SpriteProvider` (`nous/openai/openai-codex/openrouter/krea`)
-  `resolve_provider()` picks by default in this environment, and whether it
-  can reuse the existing Codex/ChatGPT login instead of requiring a fresh
-  `OPENAI_API_KEY`. Not yet exercised — first real image-gen call happens in
-  Phase 1.
+- Which `SpriteProvider` `resolve_provider()` picks by default in this
+  environment: answered — `openai` (first available in `_REF_CAPABLE`
+  order), with `openrouter` also registered/available as a fallback via
+  Hermes's own `HERMES_PET_IMAGE_PROVIDER` override. Neither is currently
+  *functional* (see Phase 1 blocker below) — this is a credentials/billing
+  problem, not a code/architecture question.
 - No graphics-protocol terminal (Kitty/iTerm/Sixel) was available during
   Phase 0; only the unicode half-block fallback was exercised. Revisit in
   Phase 5 if a graphics-capable terminal becomes available.
+- Still open: which provider the user wants to fix/configure to unblock
+  Phase 1 (OpenAI billing, OpenRouter credential, or a third provider).
 
 ## Next action
 
-Begin Phase 1: generate `idle`/`review`/`running` grounded on
-`assets/reference/jorgito_canonical.png` via Hermes's native pet pipeline,
-in the isolated `HERMES_HOME` test profile, respecting the 1-generation +
-1-repair budget per state from `docs/04_ASSET_SPEC.md`.
+Blocked on a user decision — see `docs/phase_results/PHASE_1_RESULT.md`
+"Next phase/task". Once a working reference-capable image provider is
+confirmed, rerun:
+
+```bash
+HERMES_HOME=/home/chegusan/.hermes-jorgito-test \
+  [HERMES_PET_IMAGE_PROVIDER=<name>] \
+  /home/chegusan/.hermes/hermes-agent/venv/bin/python3 scripts/generate_phase1.py
+```
+
+then build `build/phase1_contact_sheet.png` and run
+`hermes pets show jorgito-test --state {idle,review,run}` for the F1-B
+terminal-readability check.
