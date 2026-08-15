@@ -1,0 +1,17 @@
+{
+  "project": "Jorgito Petdex for Hermes CLI",
+  "entrypoint": "AGENTS.md",
+  "canonical_asset": "assets/reference/jorgito_canonical.png",
+  "coordinator_context": [
+    "AGENTS.md",
+    "docs/00_PROJECT_BRIEF.md",
+    "docs/01_ARCHITECTURE.md",
+    "docs/02_FILE_AND_CODE_RULES.md",
+    "docs/03_INTERFACES_AND_CONTRACTS.md",
+    "docs/04_ASSET_SPEC.md",
+    "docs/05_DEVELOPMENT_PLAN.md",
+    "docs/06_TEST_PLAN.md",
+    "docs/08_PROJECT_STATE.md",
+    "docs/09_DECISIONS.md"
+  ]
+}

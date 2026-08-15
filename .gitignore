@@ -1,0 +1,13 @@
+.DS_Store
+*.swp
+*.tmp
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+
+# Working/generated artifacts (contact sheets, intermediate renders, exports)
+build/
+.scratch/
+*.local.png
+*.local.webp
