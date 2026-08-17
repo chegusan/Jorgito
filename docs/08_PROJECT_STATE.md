@@ -4,32 +4,36 @@ Keep this file short. Replace stale status rather than accumulating a diary.
 
 ## Current phase
 
-Phase 1 — Minimal visual proof (deterministic processing PASS — awaiting
-user's visual identity/readability gate; see
+Phase 1 — Minimal visual proof (**PASS**, F1-A approved by user + F1-B
+evidence collected with one documented open decision; see
 `docs/phase_results/PHASE_1_RESULT.md`)
 
 ## Last gate
 
-Status: Phase 1 — PASS on deterministic processing (see
-`docs/phase_results/PHASE_1_RESULT.md`); F1-A/F1-B visual approval is the
-user's call, still pending. Phase 0 — PASS (see
+Status: Phase 1 — **PASS**. F1-A (identity): approved by the user verbatim
+("Están perfectos") on `assets/keyframes/contact_sheet_phase1.png`. F1-B
+(P1.2/P1.3 thinking/working readability at real terminal scale): tested by
+packaging idle/run/review into a real Hermes pet
+(`scripts/build_phase1_test_pet.py`) in the isolated profile
+`HERMES_HOME=/home/chegusan/.hermes-jorgito-test` and rendering with the
+real `hermes pets show` CLI + a direct-API check at the project's true
+default scale. Result is render-tier-dependent: clean PASS on kitty/iTerm2/
+sixel (real pixels — shovel+dirt reads as `run`, book+glasses reads as
+`review`, matching the confirmed convention below); DEGRADED on the
+universal unicode half-block fallback, where the 3 states collapse into a
+similar-looking blob at the 16-col default width. Full evidence and the
+one open (non-blocking) product decision for the user in
+`docs/phase_results/PHASE_1_RESULT.md`. Phase 0 — PASS (see
 `docs/phase_results/PHASE_0_RESULT.md`).
 
 ## Active objective
 
-Generate and validate `idle`, `review`, `running` for Jorgito using the
-canonical reference image, per Phase 1 of `Jorgito  Plan.md`. The earlier
-native image-generation attempt was blocked (both `openai` and `openrouter`
-failed before returning any image — see prior note below, still relevant
-for future phases). That blocker was bypassed for Phase 1 itself: the user
-generated the 3 raw keyframes manually (no API tokens spent) and committed
-them to `assets/keyframes/raw/`. This agent then processed them
-deterministically (chroma-key removal + fit-to-192x208-cell, reusing
-`agent.pet.generate.atlas`'s existing functions) into
-`assets/keyframes/processed/{idle,review,run}.png` and built
-`assets/keyframes/contact_sheet_phase1.png` for visual review. Waiting on
-the user to open the contact sheet (PR #1) and approve F1-A (identity)
-before F1-B (terminal readability) is attempted.
+Phase 1 is closed. Next: the user decides whether the unicode-fallback
+readability degradation (see "Last gate" above) needs a
+`display.pet.scale` adjustment before moving on, or is accepted as a
+known, pre-existing Hermes-wide rendering-floor limitation (not specific to
+Jorgito's artwork). Either way, Phase 2 (cost comparison) / Phase 3 (full
+8-row atlas) planning per `docs/06_TEST_PLAN.md` can proceed.
 
 ## Confirmed decisions
 
@@ -74,11 +78,9 @@ before F1-B (terminal readability) is attempted.
 
 ## Next action
 
-Waiting on the user to visually review
-`assets/keyframes/contact_sheet_phase1.png` (attached to PR #1) and approve
-F1-A (identity match) / F1-B (thinking/working readability). If approved,
-next step is installing the 3 processed cells into a test pet package and
-rendering with `hermes pets show --mode unicode` under
-`HERMES_HOME=/home/chegusan/.hermes-jorgito-test` to formally exercise
-F1-B, then moving to Phase 2 (cost comparison) / Phase 3 (full atlas)
-planning per `docs/06_TEST_PLAN.md`.
+Phase 1 is closed (PASS). Waiting on the user's call on the one open
+question in `docs/phase_results/PHASE_1_RESULT.md`'s "Bloqueantes" (accept
+the unicode-fallback readability degradation as a known Hermes limitation,
+or bump `display.pet.scale`/`unicode_cols` for that tier). Then proceed to
+Phase 2 (cost comparison) / Phase 3 (full atlas) planning per
+`docs/06_TEST_PLAN.md`.
