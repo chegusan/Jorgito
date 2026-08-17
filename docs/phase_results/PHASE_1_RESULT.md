@@ -6,234 +6,208 @@ Phase 1 — Minimal visual proof (`idle`, `review`, `running`)
 
 ## Status
 
-BLOCKED
+PASS (deterministic processing) — final visual-identity gate (F1-A/F1-B)
+still needs the user's own eyes; see "Self-assessment" below.
 
 ## Evidence
 
-### 1. Method used (per PHASE_0_RESULT.md recommendation)
+### 0. Generation path actually used (superseding the earlier API attempt)
 
-Camino A as literally specified in the plan ("Codex CLI + `hatch-pet` skill")
-does not exist on this machine (confirmed again in Phase 0). Per Phase 0's
-recommendation, this phase used Hermes's own native pet-generation pipeline
-directly (`agent/pet/generate/{imagegen,atlas,prompts}.py`,
-`agent/pet/store.py`), grounded on
-`assets/reference/jorgito_canonical.png` via `reference_images=[...]`.
+An earlier attempt in this same phase tried to generate the 3 keyframes via
+Hermes's native `imagegen` pipeline and hit hard blockers on every
+reference-capable provider configured in this environment (`openai`: billing
+hard limit; `openrouter`: 401 missing-auth). That attempt spent **0** of the
+3-generation budget (see git history on this branch, commit
+`7e71bfa`) — no image was ever produced through that path.
 
-`orchestrate.hatch_pet()` was deliberately **not** called: it always
-generates every non-mirrored row (8 image-generation calls: idle,
-running-right, waving, jumping, failed, waiting, running, review) in one
-pass, which would blow the 3-generation hard budget for this phase. Instead
-a small standalone script, `scripts/generate_phase1.py` (committed in this
-branch), drives the same underlying building blocks
-(`imagegen.generate()`, `atlas.extract_strip_frames()`,
-`atlas.normalize_cells()`, `atlas.compose_atlas()`, `atlas.validate_atlas()`,
-`store.register_local_pet()`) for only the 3 requested states — one
-generation call per state, matching the plan's Phase 1 scope exactly. This
-keeps the change at "small deterministic script reusing existing Hermes
-configuration/behavior" (AGENTS.md complexity rung 1/4), not a new
-generation engine.
+The user then generated the 3 keyframes **manually** (outside this agent,
+no API tokens spent by this session), using
+`assets/reference/jorgito_canonical.png` as the grounding reference, and
+committed them directly to
+`assets/keyframes/raw/{idle,review,run}.jpeg` (commit `b766dc9`, 1984×2144
+JPEG each). This phase result covers the deterministic processing of those
+3 already-provided raw images — no image-generation model call was made by
+this agent in this session.
 
-All commands were run with
-`HERMES_HOME=/home/chegusan/.hermes-jorgito-test` (the isolated profile from
-Phase 0). `/home/chegusan/.hermes/` was not touched — verified unchanged
-after this session (see Files changed).
+### 1. Method: deterministic processing only (Camino B, per AGENTS.md)
 
-### 2. First attempt — provider `openai` (default resolution)
+New script: `scripts/process_phase1_keyframes.py` (Pillow-only, ~130 lines,
+no network calls, no API keys, no model inference). For each of the 3 raw
+keyframes it:
+
+1. Loads the JPEG and converts to RGBA.
+2. Chroma-keys the flat hot-magenta (`#FF00FF`) backdrop to transparent.
+3. Crops to the character's content bounding box, scales it to fit inside a
+   192×208 px cell (the project's standard sprite-cell size per
+   `docs/03_INTERFACES_AND_CONTRACTS.md`) preserving aspect ratio, and
+   centers it on a transparent canvas.
+4. Saves the result as `assets/keyframes/processed/{state}.png`.
+
+It then composites the 3 processed cells into
+`assets/keyframes/contact_sheet_phase1.png`: each cell upscaled 3x on a
+checkerboard-transparency backdrop, on a light-gray sheet background, with
+an `idle` / `review` / `run` text label under each.
+
+**Reuse decision:** steps 2–3 (chroma-key removal, crop/fit-to-cell) are not
+reimplemented — this script imports and calls
+`agent.pet.generate.atlas.remove_background()` and
+`agent.pet.generate.atlas._fit_to_cell()` directly from the installed Hermes
+build (`/home/chegusan/.hermes/hermes-agent`, read-only import, same
+pattern as `scripts/generate_phase1.py`'s earlier `atlas` import). Both are
+pure-Pillow, deterministic, already-tested functions built for exactly this
+job (`atlas.py`'s own docstring: "adapted from OpenAI's `hatch-pet` skill").
+Reimplementing border-flood-fill chroma-keying and content-fit scaling from
+scratch would violate AGENTS.md's "reuse existing behavior before writing
+new code" and add real bug surface (the flood-fill trapped-pocket handling
+in particular is non-trivial) for no benefit. `remove_background()` is
+called with an explicit `chroma_key=(255, 0, 255)` (matching the
+`_BACKGROUND` spec in `agent/pet/generate/prompts.py`) and a **widened**
+threshold (130 vs. atlas.py's PNG-strip default of 90) — the source images
+are JPEGs, and JPEG's DCT/chroma-subsampling introduces per-pixel noise
+around a nominally-flat backdrop that a stricter PNG-tuned threshold missed
+in an initial dry run near the character's dark outline.
+
+### 2. Run
 
 ```text
 $ cd /home/chegusan/SGTraining/Jorgito-worktrees/phase-1-minimal-visual-proof
-$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test \
-    /home/chegusan/.hermes/hermes-agent/venv/bin/python3 scripts/generate_phase1.py
-
-resolved provider: openai (supports_references=True)
-
-=== generating row: idle (6 frames) ===
-Traceback (most recent call last):
-  ...
-  File "/home/chegusan/.hermes/hermes-agent/agent/pet/generate/imagegen.py", line 250, in generate
-    raise GenerationError(last_error or "image generation produced no output")
-agent.pet.generate.imagegen.GenerationError: OpenAI image editing failed: Error code: 400 -
-{'error': {'message': 'Billing hard limit has been reached.', 'type': 'billing_limit_user_error',
-'param': None, 'code': 'billing_hard_limit_reached'}}
+$ /home/chegusan/.hermes/hermes-agent/venv/bin/python3 scripts/process_phase1_keyframes.py
+processing 'idle'...
+  -> assets/keyframes/processed/idle.png (192x208, RGBA)
+processing 'review'...
+  -> assets/keyframes/processed/review.png (192x208, RGBA)
+processing 'run'...
+  -> assets/keyframes/processed/run.png (192x208, RGBA)
+building contact sheet...
+  -> assets/keyframes/contact_sheet_phase1.png (1824x712)
 ```
 
-`resolve_provider(require_references=True)` picked `openai` (first available
-reference-capable provider in `_REF_CAPABLE` preference order — `nous` and
-`openai-codex` are not registered/configured in this environment; `openai`
-and `openrouter` are). The call failed at the provider boundary with a
-billing hard limit on the account behind `OPENAI_API_KEY`. **No image was
-generated or downloaded** — the failure happens before any bytes are
-returned, so this did not consume any of the 3-generation budget.
+Used the Hermes-bundled venv (`/home/chegusan/.hermes/hermes-agent/venv`)
+only for its Pillow install — no Hermes runtime state (config, credentials,
+`HERMES_HOME`) is touched by this script; it is pure image processing.
 
-### 3. Second attempt — provider `openrouter` (Hermes's own QA override)
+### 3. Background-removal quality check
 
-Rather than treating a single provider's billing block as a full stop,
-`openrouter` was also registered and reported `is_available() == True` in
-this environment (confirmed via direct inspection:
-`agent.image_gen_registry.get_provider("openrouter").is_available()`
-returns `True` because it resolves a non-empty `api_key` from Hermes's
-runtime credential resolution — not from a plain `OPENROUTER_API_KEY` env
-var, which is unset here). Hermes ships an official, documented override for
-exactly this situation — `HERMES_PET_IMAGE_PROVIDER=<name>` — described in
-`imagegen.py`'s own docstring as "an optional QA override to force a
-pet-gen backend." Using it is existing Hermes configuration/behavior (rung
-1 of AGENTS.md's complexity ladder), not a new tool or workaround, so it was
-used to force `openrouter` instead of installing/configuring anything new:
+Measured residual near-magenta pixels among opaque (alpha > 16) pixels in
+each processed cell:
 
 ```text
-$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test HERMES_PET_IMAGE_PROVIDER=openrouter \
-    /home/chegusan/.hermes/hermes-agent/venv/bin/python3 scripts/generate_phase1.py
-
-openrouter image gen failed (401) on openai/gpt-5.4-image-2: Missing Authentication header
-resolved provider: openrouter (supports_references=True)
-
-=== generating row: idle (6 frames) ===
-Traceback (most recent call last):
-  ...
-agent.pet.generate.imagegen.GenerationError: OpenRouter image generation failed (401): Missing Authentication header
+idle:   18128 opaque px, 1 magenta-ish px  (0.01%)
+review: 19789 opaque px, 5 magenta-ish px  (0.03%)
+run:    19691 opaque px, 20 magenta-ish px (0.10%)
 ```
 
-Again, no image was generated or downloaded — the failure is a 401 at the
-OpenRouter API boundary, before any bytes are returned. This also did not
-consume any of the 3-generation budget.
+All three are well under 0.1–0.2%, consistent with a clean chroma-key
+(visually confirmed too — see contact sheet). No background patch survived
+as a solid remnant; the residue is a few anti-aliased edge pixels along
+wing/limb outlines, not a segmentation failure.
 
-### 4. No further providers available without new credentials
+### 4. Self-assessment (NOT the final gate — user approves visually)
 
-```text
-$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test venv/bin/python3 -c "... list_providers() ..."
-deepinfra  False
-fal        False
-krea       False
-nous       False
-openai     True   (billing hard limit — see #2)
-openai-codex False
-openrouter True   (401 missing auth header — see #3)
-xai        False
-```
+Visually inspecting `assets/keyframes/contact_sheet_phase1.png` myself
+(this agent can render images): all 3 cells preserve every identity
+invariant from `docs/04_ASSET_SPEC.md` — crimson/burgundy body, large green
+eyes with visible white, small tan horns, yellow-gold belly/neck plates and
+wing membranes, curled tail, friendly expression — and each hero action
+reads clearly at cell scale: `review` shows visible glasses + an open book
+in a reading pose; `run` shows a visible shovel with dirt/earth accents in
+a digging pose; `idle` is a calm neutral standing pose. Background is fully
+transparent (checkerboard shows through) in all 3.
 
-Of the 5 providers `imagegen._REF_CAPABLE` will accept for grounded pet rows
-(`nous, openai, openai-codex, openrouter, krea`), only `openai` and
-`openrouter` are registered/configured in this environment at all, and both
-are non-functional for reasons outside this project's scope (account
-billing; a broken/stale credential behind Hermes's `openrouter` runtime
-resolution). `nous`, `openai-codex`, and `krea` have no credentials
-configured here. Per AGENTS.md rung 8 ("ask the user if confirmation or
-decisions are needed, do not assume unless stated otherwise") and the task's
-own instruction to stop and report rather than chase workarounds,
-**generation stopped here** rather than attempting to add new provider
-credentials.
-
-### 5. Zero images generated — nothing to visually evaluate yet
-
-Because both available providers failed before returning any image bytes,
-`idle`, `review`, and `running` were **not generated**. There is no contact
-sheet, no raw asset, and no `jorgito-test` pet to show in this phase. The
-F1-A (identity) and F1-B (terminal readability) tests from
-`Jorgito  Plan.md` / `docs/06_TEST_PLAN.md` could not be run — there is
-nothing to evaluate.
+This is my own read, not the required approval — per the task instructions,
+**the final visual-identity gate is the user's call, not this agent's**.
+The user should open `assets/keyframes/contact_sheet_phase1.png` (or the PR)
+and confirm F1-A (identity match to canonical) and, once installed/rendered
+in a real terminal, F1-B (thinking/working readability at CLI scale — not
+yet exercised in this pass, since that requires installing the cells into a
+pet package and rendering, which is beyond this deterministic-processing
+task).
 
 ## Tests executed
 
-- `HERMES_HOME=... venv/bin/python3 scripts/generate_phase1.py` (default
-  provider resolution → `openai` → billing hard limit, no image produced).
-- `HERMES_HOME=... HERMES_PET_IMAGE_PROVIDER=openrouter venv/bin/python3
-  scripts/generate_phase1.py` (forced `openrouter` → 401 missing auth
-  header, no image produced).
-- `HERMES_HOME=... venv/bin/python3 -c "..."` — direct inspection of
-  `agent.image_gen_registry.list_providers()` / `get_provider(name)
-  .is_available()` for all 8 registered providers and all 5
-  reference-capable names, to confirm no other viable provider is
-  configured in this environment.
-- No F1-A/F1-B visual or in-terminal tests were run (nothing was generated
-  to test).
+- `venv/bin/python3 scripts/process_phase1_keyframes.py` — full run, see
+  §2. Exit 0, all 3 outputs produced.
+- Verified each `assets/keyframes/processed/{state}.png` is exactly
+  192×208 RGBA (matches the project's standard cell size).
+- Residual-magenta pixel count check per processed cell (§3).
+- Visual inspection of the contact sheet by this agent (§4) — informal,
+  not a substitute for the user's required visual gate.
+- Did not run F1-B (real-terminal readability) — no pet package was
+  installed/rendered in this pass; out of scope for "process these 3
+  keyframes" as scoped by the task.
 
 ## Cost
 
-- image generations: **0** (both attempts failed before any image was
-  returned by the provider)
-- retries: 0 beyond the one documented provider-switch (openai → openrouter,
-  via Hermes's own `HERMES_PET_IMAGE_PROVIDER` override, not a same-provider
-  retry of a bad result)
-- approximate model/tool usage: 2 failed API calls (1 to OpenAI's
-  gpt-image-2 edit endpoint, 1 to OpenRouter's `openai/gpt-5.4-image-2`),
-  both rejected before generating pixels; no billable image generation
-  occurred
-- development time: ~1 session (Phase 1 attempt, this result)
+- image generations: 0 (this session did not call any image-generation
+  model or API; the 3 keyframes were generated manually by the user outside
+  this agent, before this task started)
+- retries: 0
+- approximate model/tool usage: 1 local Python script run (Pillow only, no
+  network, no LLM/model calls at runtime)
+- development time: ~1 session (this deterministic-processing pass)
 
 ## Files changed
 
-- Added: `scripts/generate_phase1.py` — the Phase 1 generation script
-  (3-generation-budget row driver on top of Hermes's own pet-gen
-  primitives). Kept even though it produced no output this run — it is
-  correct, tested up to the provider boundary, and is the artifact the next
-  attempt should reuse once a working provider is available.
-- Added: `docs/phase_results/PHASE_1_RESULT.md` (this file).
-- Updated: `docs/08_PROJECT_STATE.md` (phase status, blocker, next action).
-- No files added under `work/` or `build/phase1/` — both directories were
-  created but remain empty (no bytes were ever produced to write there).
-- Verified `/home/chegusan/.hermes/` was not touched: `pets/` dir still
-  empty, `config.yaml` mtime unchanged, no `active_profile` file created —
-  same check as Phase 0.
+- Added: `scripts/process_phase1_keyframes.py` — the deterministic
+  processing script (chroma-key + fit-to-cell + contact sheet).
+- Added: `assets/keyframes/processed/idle.png` (192×208 RGBA)
+- Added: `assets/keyframes/processed/review.png` (192×208 RGBA)
+- Added: `assets/keyframes/processed/run.png` (192×208 RGBA)
+- Added: `assets/keyframes/contact_sheet_phase1.png` (1824×712, the visual
+  gate artifact for the user)
+- Updated: `docs/phase_results/PHASE_1_RESULT.md` (this file — supersedes
+  the earlier BLOCKED write-up now that the generation-provider blocker is
+  moot; the manual-keyframe path bypassed it entirely)
+- Updated: `docs/08_PROJECT_STATE.md` (phase status, next action)
+- Not touched: `/home/chegusan/.hermes/` (this script performs no Hermes
+  runtime calls at all, only a Pillow import from the installed package's
+  source tree — verified no writes occur there, same standing check as
+  Phase 0).
 
 ## Problems
 
-- OpenAI billing hard limit on the account behind the environment's
-  `OPENAI_API_KEY` blocks all `openai`-backed pet-sprite generation until
-  the account's billing is fixed by the user (add funds / raise the limit /
-  switch keys).
-- Hermes's `openrouter` image-gen provider reports `is_available() == True`
-  in this environment (it resolves a non-empty `api_key` from Hermes's
-  runtime credential store) but the live call fails with `401 Missing
-  Authentication header` calling `openai/gpt-5.4-image-2` on OpenRouter.
-  This looks like a stale/misconfigured credential specifically for
-  OpenRouter image generation inside this Hermes profile/runtime — outside
-  this project's scope to fix (would require inspecting/editing credential
-  storage, which was not authorized for this phase).
-- No other reference-capable provider (`nous`, `openai-codex`, `krea`) is
-  configured in this environment; enabling one would require new API keys,
-  which is a user decision (AGENTS.md rung 8), not something to assume.
+- The two image-provider blockers from the earlier attempt in this phase
+  (OpenAI billing hard limit, OpenRouter 401) are now moot for Phase 1
+  specifically, since the keyframes came from the user directly — but they
+  remain unresolved and will block any *future* phase (e.g. Phase 3's
+  8-row full atlas generation) that needs the native `imagegen` pipeline
+  again. Worth the user fixing at least one before that phase starts.
+- The JPEG source format (vs. a lossless PNG a model API would normally
+  return) required loosening the chroma-key threshold from atlas.py's
+  default. This worked cleanly for these 3 images (see §3) but is a
+  reminder that manually-sourced JPEG keyframes are lossier raw material
+  than the pipeline's native PNG/WebP output — worth keeping in mind if
+  future manual keyframes come from a different tool with different JPEG
+  quality/compression.
+- F1-B (terminal readability at real CLI scale) was not exercised — doing
+  so needs the cells installed into an actual pet package and rendered via
+  `hermes pets show`, which is beyond "process these 3 raw keyframes" as
+  scoped. Flagging so it isn't silently skipped for the overall Phase 1
+  acceptance criteria in `docs/06_TEST_PLAN.md`.
 
 ## Bloqueantes
 
-Sí. Ambos proveedores de imagen referencia-capaces disponibles en este
-entorno (`openai`, `openrouter`) fallan antes de producir ninguna imagen:
-`openai` por límite de facturación de la cuenta, `openrouter` por un header
-de autenticación faltante/inválido. Ningún otro proveedor referencia-capaz
-tiene credenciales configuradas. Esto bloquea toda generación de imagen para
-Fase 1 hasta que el usuario resuelva uno de los dos (o configure un tercer
-proveedor) — no es algo que este agente pueda o deba resolver
-unilateralmente.
+Ninguno para esta tarea puntual (procesamiento determinístico). El gate
+visual final (F1-A identidad + F1-B legibilidad en terminal real) sigue
+pendiente de aprobación del usuario — eso no es un bloqueante técnico, es
+el paso de aprobación explícitamente reservado al usuario por la tarea.
 
 ## Decision
 
-stop
+continue
 
 ## Next phase/task
 
-Fase 1 no puede continuar hasta que el usuario resuelva al menos uno de:
-
-1. Levantar/arreglar el límite de facturación en la cuenta de OpenAI detrás
-   de `OPENAI_API_KEY` (usada por Hermes para `gpt-image-2`), o
-2. Corregir la credencial de OpenRouter que Hermes está resolviendo para
-   `openrouter` (actualmente devuelve 401 "Missing Authentication header"
-   pese a que `is_available()` la reporta como configurada), o
-3. Configurar explícitamente otro proveedor referencia-capaz (`nous` o
-   `krea`) con credenciales nuevas.
-
-Una vez resuelto, la Fase 1 puede reintentarse ejecutando exactamente:
-
-```bash
-cd /home/chegusan/SGTraining/Jorgito-worktrees/phase-1-minimal-visual-proof
-HERMES_HOME=/home/chegusan/.hermes-jorgito-test \
-  [HERMES_PET_IMAGE_PROVIDER=<name> si hace falta forzar un proveedor] \
-  /home/chegusan/.hermes/hermes-agent/venv/bin/python3 scripts/generate_phase1.py
-```
-
-`scripts/generate_phase1.py` ya implementa el resto de la Fase 1 (3
-generaciones exactas, extracción de frames, atlas parcial de 3/9 filas,
-`validate_atlas()`, instalación como pet de prueba `jorgito-test`); falta
-únicamente construir el contact sheet (`build/phase1_contact_sheet.png`) y
-correr `hermes pets show jorgito-test --state {idle,review,run}` para F1-B,
-ambos pasos triviales una vez que existan frames reales. No se debe volver a
-intentar generación sin que el usuario confirme que uno de los proveedores
-de arriba ya funciona, para no gastar más intentos contra un proveedor roto.
+1. Usuario revisa `assets/keyframes/contact_sheet_phase1.png` (adjunto al
+   PR #1) y aprueba/rechaza F1-A (identidad) visualmente.
+2. Si aprueba: F1-B (legibilidad en terminal real) requeriría instalar estas
+   3 celdas en un paquete de pet de prueba (atlas parcial, como ya arma
+   `scripts/generate_phase1.py` a partir de frames) y renderizarlo con
+   `hermes pets show --mode unicode` en el perfil aislado
+   `HERMES_HOME=/home/chegusan/.hermes-jorgito-test` — no incluido en esta
+   tarea, que se limitó explícitamente al procesamiento determinístico +
+   contact sheet.
+3. Antes de la Fase 3 (atlas completo de 8 filas), resolver al menos uno de
+   los bloqueantes de proveedor de imagen (OpenAI billing / credencial de
+   OpenRouter) si esa fase vuelve a depender del pipeline nativo de
+   generación en lugar de más keyframes manuales.
