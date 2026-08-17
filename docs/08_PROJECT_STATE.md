@@ -4,11 +4,27 @@ Keep this file short. Replace stale status rather than accumulating a diary.
 
 ## Current phase
 
-Phase 1 — Minimal visual proof (**PASS**, F1-A approved by user + F1-B
-evidence collected with one documented open decision; see
-`docs/phase_results/PHASE_1_RESULT.md`)
+Phase 3 — Deterministic processing of 5 additional manually-generated
+keyframes (`waiting`, `failed`, `jump`, `wave`, `running-right`) —
+**processing self-assessed PASS, visual gate pending user approval** on
+`assets/keyframes/contact_sheet_phase3.png`; see
+`docs/phase_results/PHASE_3_RESULT.md`. Phase 1 — **PASS** (below).
 
 ## Last gate
+
+Status: Phase 3 processing — **self-assessed PASS, pending user visual
+approval**. All 5 new keyframes chroma-keyed + fit to 192×208 cells at
+0.00% residual magenta each (better than Phase 1's 0.01-0.10% range),
+composited into `assets/keyframes/contact_sheet_phase3.png`. Reused Phase
+1's method via a new shared module (`scripts/keyframe_processing.py`)
+instead of duplicating it; Phase 1's own outputs verified byte-identical
+after that refactor. One real fix was needed: Phase 3's raw backdrop had
+drifted from pure magenta (a ComfyUI/JPEG-export shade shift, not just
+compression noise), so keying uses `chroma_key=None` (atlas.py's built-in
+per-image auto-detection) instead of Phase 1's fixed `(255, 0, 255)`. Full
+detail in `docs/phase_results/PHASE_3_RESULT.md`. `running-left`
+intentionally not included — deferred to a future full-atlas-assembly
+phase (mirror of `running-right`, no new generation needed).
 
 Status: Phase 1 — **PASS**. F1-A (identity): approved by the user verbatim
 ("Están perfectos") on `assets/keyframes/contact_sheet_phase1.png`. F1-B
@@ -28,12 +44,15 @@ one open (non-blocking) product decision for the user in
 
 ## Active objective
 
-Phase 1 is closed. Next: the user decides whether the unicode-fallback
-readability degradation (see "Last gate" above) needs a
-`display.pet.scale` adjustment before moving on, or is accepted as a
-known, pre-existing Hermes-wide rendering-floor limitation (not specific to
-Jorgito's artwork). Either way, Phase 2 (cost comparison) / Phase 3 (full
-8-row atlas) planning per `docs/06_TEST_PLAN.md` can proceed.
+**Pending: user visual approval** of `assets/keyframes/contact_sheet_phase3.png`
+— identity match to `jorgito_canonical.png` + per-action legibility for
+waiting/failed/jump/wave/running-right (same gate process as Phase 1's
+F1-A). Separately, Phase 1's still-open unicode-fallback readability
+question (see Phase 1 entries above) stands independently and isn't
+blocking. Once Phase 3's 5 keyframes are approved, the natural next step is
+full-atlas assembly — mirroring `running-left` from `running-right` and
+packaging all 8/9 states into a real Hermes pet — per
+`docs/06_TEST_PLAN.md`.
 
 ## Confirmed decisions
 
@@ -78,9 +97,10 @@ Jorgito's artwork). Either way, Phase 2 (cost comparison) / Phase 3 (full
 
 ## Next action
 
-Phase 1 is closed (PASS). Waiting on the user's call on the one open
-question in `docs/phase_results/PHASE_1_RESULT.md`'s "Bloqueantes" (accept
-the unicode-fallback readability degradation as a known Hermes limitation,
-or bump `display.pet.scale`/`unicode_cols` for that tier). Then proceed to
-Phase 2 (cost comparison) / Phase 3 (full atlas) planning per
-`docs/06_TEST_PLAN.md`.
+Waiting on the user's visual approval of
+`assets/keyframes/contact_sheet_phase3.png` (Phase 3's gate — see "Active
+objective" above). Independently, Phase 1's still-open unicode-fallback
+question in `docs/phase_results/PHASE_1_RESULT.md`'s "Bloqueantes" is
+unresolved but non-blocking. `running-left` remains explicitly deferred to
+a future full-atlas-assembly phase per
+`docs/phase_results/PHASE_3_RESULT.md`.
