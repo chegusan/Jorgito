@@ -4,27 +4,37 @@ Keep this file short. Replace stale status rather than accumulating a diary.
 
 ## Current phase
 
-Phase 3 — Deterministic processing of 5 additional manually-generated
-keyframes (`waiting`, `failed`, `jump`, `wave`, `running-right`) —
-**processing self-assessed PASS, visual gate pending user approval** on
-`assets/keyframes/contact_sheet_phase3.png`; see
-`docs/phase_results/PHASE_3_RESULT.md`. Phase 1 — **PASS** (below).
+Phase 4 — Full 9-row atlas assembly + validation (`idle`, `running-right`,
+`running-left`, `waving`, `jumping`, `failed`, `waiting`, `running`,
+`review`) — **self-assessed PASS, visual gate pending user approval** on
+`assets/keyframes/contact_sheet_phase4_full.png`; see
+`docs/phase_results/PHASE_4_RESULT.md`. Phases 1 and 3 — **PASS** (below).
 
 ## Last gate
 
-Status: Phase 3 processing — **self-assessed PASS, pending user visual
-approval**. All 5 new keyframes chroma-keyed + fit to 192×208 cells at
-0.00% residual magenta each (better than Phase 1's 0.01-0.10% range),
-composited into `assets/keyframes/contact_sheet_phase3.png`. Reused Phase
-1's method via a new shared module (`scripts/keyframe_processing.py`)
+Status: Phase 4 — **self-assessed PASS, pending user visual approval**.
+`running-left` derived by horizontal mirror of `running-right`
+(`agent.pet.generate.atlas.mirror_frames`, zero generation). Full atlas
+composed via Hermes's own `atlas.compose_atlas()` (not a hand-rolled
+spritesheet layout) and validated with Hermes's own `atlas.validate_atlas()`
+— result `ok: true`, `1536×1872`, all 9 states filled, 0 errors/warnings.
+Installed as pet `jorgito` in the isolated profile only
+(`HERMES_HOME=/home/chegusan/.hermes-jorgito-test`) via
+`agent.pet.store.register_local_pet()`; all 9 states rendered successfully
+through the real `hermes pets show` CLI (faked TTY via `script`, `exit=0`
+for all 9). Real `~/.hermes` verified untouched. Full detail in
+`docs/phase_results/PHASE_4_RESULT.md`.
+
+Status: Phase 3 — **PASS**. All 5 keyframes (`waiting`, `failed`, `jump`,
+`wave`, `running-right`) chroma-keyed + fit to 192×208 cells at 0.00%
+residual magenta each, composited into `assets/keyframes/contact_sheet_phase3.png`.
+Reused Phase 1's method via a shared module (`scripts/keyframe_processing.py`)
 instead of duplicating it; Phase 1's own outputs verified byte-identical
 after that refactor. One real fix was needed: Phase 3's raw backdrop had
 drifted from pure magenta (a ComfyUI/JPEG-export shade shift, not just
 compression noise), so keying uses `chroma_key=None` (atlas.py's built-in
 per-image auto-detection) instead of Phase 1's fixed `(255, 0, 255)`. Full
-detail in `docs/phase_results/PHASE_3_RESULT.md`. `running-left`
-intentionally not included — deferred to a future full-atlas-assembly
-phase (mirror of `running-right`, no new generation needed).
+detail in `docs/phase_results/PHASE_3_RESULT.md`.
 
 Status: Phase 1 — **PASS**. F1-A (identity): approved by the user verbatim
 ("Están perfectos") on `assets/keyframes/contact_sheet_phase1.png`. F1-B
@@ -44,15 +54,16 @@ one open (non-blocking) product decision for the user in
 
 ## Active objective
 
-**Pending: user visual approval** of `assets/keyframes/contact_sheet_phase3.png`
-— identity match to `jorgito_canonical.png` + per-action legibility for
-waiting/failed/jump/wave/running-right (same gate process as Phase 1's
-F1-A). Separately, Phase 1's still-open unicode-fallback readability
-question (see Phase 1 entries above) stands independently and isn't
-blocking. Once Phase 3's 5 keyframes are approved, the natural next step is
-full-atlas assembly — mirroring `running-left` from `running-right` and
-packaging all 8/9 states into a real Hermes pet — per
-`docs/06_TEST_PLAN.md`.
+**Pending: user visual approval** of
+`assets/keyframes/contact_sheet_phase4_full.png` — identity match to
+`jorgito_canonical.png` + per-action legibility across all 9 states,
+including a clean, artifact-free `running-left` mirror (same gate process
+as Phase 1's F1-A / Phase 3). Separately, Phase 1's still-open
+unicode-fallback readability question (see Phase 1 entries above) stands
+independently, confirmed to apply equally to all 9 states in Phase 4, and
+isn't blocking. Once approved, the natural next step is Phase 5 — installing
+`jorgito` into the real `/home/chegusan/.hermes/` profile — dispatched as a
+separate task, not part of this phase.
 
 ## Confirmed decisions
 
@@ -98,9 +109,10 @@ packaging all 8/9 states into a real Hermes pet — per
 ## Next action
 
 Waiting on the user's visual approval of
-`assets/keyframes/contact_sheet_phase3.png` (Phase 3's gate — see "Active
-objective" above). Independently, Phase 1's still-open unicode-fallback
-question in `docs/phase_results/PHASE_1_RESULT.md`'s "Bloqueantes" is
-unresolved but non-blocking. `running-left` remains explicitly deferred to
-a future full-atlas-assembly phase per
-`docs/phase_results/PHASE_3_RESULT.md`.
+`assets/keyframes/contact_sheet_phase4_full.png` (Phase 4's gate — see
+"Active objective" above). Once approved: Phase 5 (install `jorgito` into
+the real `/home/chegusan/.hermes/` profile) is a separately-dispatched task,
+not part of Phase 4. Independently, Phase 1's still-open unicode-fallback
+question in `docs/phase_results/PHASE_1_RESULT.md`'s "Bloqueantes" remains
+unresolved but non-blocking (confirmed in Phase 4 to apply equally across
+all 9 states).
