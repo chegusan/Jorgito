@@ -4,16 +4,30 @@ Keep this file short. Replace stale status rather than accumulating a diary.
 
 ## Current phase
 
-Phase 1 — Minimal visual proof (not started)
+Phase 2 — Camino decision (DONE, see `docs/phase_results/PHASE_2_RESULT.md`).
+Next up: Phase 3 (generate remaining 5 keyframes) + Phase 4 (full 8-state
+atlas script), blocked on user externally generating the remaining
+keyframes.
 
 ## Last gate
 
-Status: Phase 0 — PASS (see `docs/phase_results/PHASE_0_RESULT.md`)
+- Phase 0 — PASS (see `docs/phase_results/PHASE_0_RESULT.md`).
+- Phase 1 — PASS (F1-A identity + F1-B terminal readability, both approved/
+  verified with real evidence). Work lives on branch
+  `phase-1-minimal-visual-proof`, **PR #1 open, not yet merged** —
+  merging is the user's call, not the orchestrator's.
+  See `docs/phase_results/PHASE_1_RESULT.md`.
+- Phase 2 — PASS (Camino B chosen for the remaining states, with evidence).
+  See `docs/phase_results/PHASE_2_RESULT.md`.
 
 ## Active objective
 
-Generate and validate `idle`, `review`, `running` for Jorgito using the
-canonical reference image, per Phase 1 of `Jorgito  Plan.md`.
+Get the user to externally generate the 5 remaining keyframes (`waiting`,
+`failed`, `jump`, `wave`, `running-right`) using the prompts already
+provided (base block + jorgito_canonical.png as reference), then dispatch
+Phase 3/4: generalize the deterministic processing script to the full
+8-state atlas (+ mirrored `running-left`), validate it, and build the final
+contact sheet for the Phase 3 visual gate.
 
 ## Confirmed decisions
 
@@ -24,35 +38,43 @@ canonical reference image, per Phase 1 of `Jorgito  Plan.md`.
 - Preserve Jorgito identity and action readability; perfection is not required.
 - Thinking/review = book + glasses.
 - Working/running = shovel + moving earth.
-- Every phase has a validation gate.
+- Every phase has a validation gate; visual gates (identity, action
+  readability) are approved by the user, never by a sub-agent on its own.
 - Complexity budget applies.
 - Isolated Hermes testing uses `HERMES_HOME=/home/chegusan/.hermes-jorgito-test`
   (env var override, verified in source), never `hermes profile create`
   (which nests under `~/.hermes/profiles/`). The real `/home/chegusan/.hermes/`
-  must stay untouched until Phase 5.
-- Phase 1 asset generation should go through Hermes's own built-in pet
-  pipeline (`agent.pet.generate.orchestrate`, reachable via `/hatch` or
-  direct Python call with `reference_images=[...]`) rather than an external
-  Codex `hatch-pet` skill, which is not installed/available on this machine.
+  must stay untouched until Phase 5 — verified intact after every phase so far.
+- Phase 1's native-generation attempt (`agent.pet.generate.orchestrate`) is
+  blocked by billing/credentials in this environment (OpenAI: no credit;
+  OpenRouter: fixed but user paused further spend) — not a code problem.
+- **Phase 2 decision: Camino B** (user generates keyframes externally with
+  the canonical reference + prepared prompts; a deterministic Pillow script
+  reusing Hermes's own `atlas.py` primitives does chroma-key + fit-to-cell +
+  atlas assembly). Zero API image-generation cost in this environment.
+  Camino A stays available in the backlog if billing/credentials get
+  resolved later — not required for MVP completion.
+- Retry budget per visual gate: 4 attempts; if a gate doesn't converge in 4
+  attempts, escalate to the user instead of continuing to iterate.
 
 ## Open questions
 
-- How to pass `assets/reference/jorgito_canonical.png` as a grounding
-  reference into the pet-generation pipeline: extend `_handle_hatch_command`
-  with a `--reference` flag, or call `orchestrate.generate_base_drafts()` /
-  `hatch_pet()` directly from a small script. Decide during Phase 1 planning.
-- Which `SpriteProvider` (`nous/openai/openai-codex/openrouter/krea`)
-  `resolve_provider()` picks by default in this environment, and whether it
-  can reuse the existing Codex/ChatGPT login instead of requiring a fresh
-  `OPENAI_API_KEY`. Not yet exercised — first real image-gen call happens in
-  Phase 1.
+- Non-blocking product decision from F1-B: the unicode half-block terminal
+  fallback (tmux/VS Code/plain SSH) degrades prop readability at the
+  project's default `display.pet.scale=0.33`; pixel-capable terminals
+  (kitty/iTerm2/sixel) read fine. Known Hermes limitation, not
+  Jorgito-specific. Revisit before/at Phase 5 if it matters for the target
+  environment.
 - No graphics-protocol terminal (Kitty/iTerm/Sixel) was available during
-  Phase 0; only the unicode half-block fallback was exercised. Revisit in
-  Phase 5 if a graphics-capable terminal becomes available.
+  Phase 0/1; only the unicode half-block fallback was exercised end-to-end.
 
 ## Next action
 
-Begin Phase 1: generate `idle`/`review`/`running` grounded on
-`assets/reference/jorgito_canonical.png` via Hermes's native pet pipeline,
-in the isolated `HERMES_HOME` test profile, respecting the 1-generation +
-1-repair budget per state from `docs/04_ASSET_SPEC.md`.
+Waiting on the user to generate and hand over the 5 remaining raw keyframes
+(`waiting`, `failed`, `jump`, `wave`, `running-right`) using the prompts
+already given (base block + `jorgito_canonical.png` reference, magenta
+background). Once provided, dispatch an `implement` sub-agent for Phase 3/4:
+extend the Phase 1 processing script into a full 8-state atlas builder
+(including `running-left` as a horizontal mirror of `running-right`),
+validate it with Hermes's `atlas.validate_atlas()`, and produce the final
+contact sheet for the user's Phase 3 visual gate.
