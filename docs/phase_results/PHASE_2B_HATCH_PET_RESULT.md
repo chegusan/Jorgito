@@ -743,3 +743,178 @@ needing only a new thin runner script.
 - `assets/keyframes/waiting_row_report.json` (new).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).
+
+---
+
+## Addendum #4 — `failed` row (3 poses, 8 frames)
+
+**Status: DONE, `failed` state only, awaiting human visual gate.** Applied
+the now-generalized pattern (`scripts/pose_sequence.py` +
+`scripts/state_row.py`, unmodified from addendum #3) to `failed`, per
+`docs/04_ASSET_SPEC.md`'s "Failed: Friendly confused reaction; optional tiny
+smoke puff" and the Plan's "Jorgito mostrando un error/reacción cómica
+leve". No new refactor needed — only a thin per-state runner pair, same
+shape as `waiting`'s.
+
+### Step 1 — confirm `failed`'s row frame count
+
+`agent.pet.generate.atlas.ROW_SPECS`: `("failed", 5, 8)` — row index 5, **8
+frames**, longer than `review`/`waiting`'s 6. Read directly from the real
+source (`/home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py`),
+not re-derived from the doc excerpt above.
+
+### Step 2 — generate 3 real chained poses, with the `waiting` caveat in mind
+
+New `scripts/generate_failed_sequence.py` (thin runner over
+`pose_sequence.generate_pose_sequence`). `waiting`'s addendum #3 flagged
+that its 3 poses read as too visually similar (same body orientation, only
+subtle stance/gaze differences) — each action description here was written
+to force a **structurally different body pose**, not just an expression
+shift, so the progression reads at a glance:
+
+1. **pose1 (neutral confused/surprised):** both arms down at sides, torso
+   leaned back slightly, head tilted, eyebrows raised, small "huh?" mouth —
+   no smoke, no props.
+2. **pose2 (arm raised, scratching head)**, grounded on canonical + pose1's
+   raw output: one arm now bent and raised with the hand/paw scratching the
+   top of the head, the other arm still down, head tilted further, eyes
+   looking up-and-off as if puzzling over the problem.
+3. **pose3 (both arms up, smoke puff)**, grounded on canonical + pose2's raw
+   output: both arms raised in an exaggerated shrug/puzzled gesture, a small
+   comedic sweat-drop, a tiny wisp of white smoke puffing from just above the
+   head, gentle and cute — explicitly NOT scary or aggressive.
+
+All 3 calls succeeded (`imagegen.generate(n=1, ...)`, one call each, no
+retries, no fallback provider). Elapsed: 20.3s / 22.6s / 42.4s.
+
+**Result: clearly distinguishable poses.** Unlike `waiting`, the 3 raw
+outputs show visibly different arm/body positions (arms down → one arm up →
+both arms up) — confirmed by direct visual inspection of the raw generated
+images, not just the prompt intent.
+
+**Visual defect for the human gate:** pose3's raw generation includes a
+soft drop-shadow ellipse beneath the character, on a slightly different
+shade of green than the flat chroma-key background. `atlas.remove_background
+(chroma_key=None, threshold=90.0)` (auto-detect) did not fully key out that
+shadow — it survives as a small green patch under the feet in the processed
+cell and in every row column that uses pose 3 (columns 2 and 3). Poses 1 and
+2 have clean flat backgrounds with no shadow and keyed out cleanly. Not
+retried (one call per pose, no retry loop, per guardrails) — flagged as-is,
+same practice as `waiting`'s caveat.
+
+### Step 3 — process through chroma-key/fit-to-cell
+
+Same pipeline as `review`/`waiting`: `atlas.remove_background(rgba,
+chroma_key=None, threshold=90.0)` + `atlas._fit_to_cell()`, applied inline
+inside `generate_pose_sequence` immediately after each successful call.
+Output: `assets/keyframes/processed/failed_pose{1,2,3}.png`, each 192x208
+RGBA (pose3 carries the shadow-patch defect noted above).
+
+### Step 4 — build the real `failed` row (8 frames, 3 real poses)
+
+New `scripts/build_failed_row.py` (thin runner over
+`state_row.build_state_row`). `_pingpong_order(3, 8)` cycles the base
+6-length ping-pong pattern once: `[0, 1, 2, 2, 1, 0, 0, 1]` (pose1, pose2,
+pose3, pose3, pose2, pose1, pose1, pose2) — the generalized helper handles
+the longer row without any state-specific logic. Phase 4 `_vary()` wobble
+applied on top of each real pose, same as every prior row.
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 (neutral confused) | `88756f92b416e19a` |
+| 1 | pose 2 (arm scratching head) | `b019552be7f98fbc` |
+| 2 | pose 3 (both arms up, smoke) | `6c6c37c0e1c66b9d` |
+| 3 | pose 3 (both arms up, smoke) | `284b69c91ad99f01` |
+| 4 | pose 2 (arm scratching head) | `73c34bd407d5cd57` |
+| 5 | pose 1 (neutral confused) | `98f7e9f91fcbb9d4` |
+| 6 | pose 1 (neutral confused) | `616b2918b58514b0` |
+| 7 | pose 2 (arm scratching head) | `d75da4c563831207` |
+
+**8/8 unique.**
+
+### Step 5 — validation
+
+Full-size (1536×1872) atlas image via `atlas.compose_atlas({"failed":
+frames})`, only the `failed` row filled. Hermes's real, unmodified
+`atlas.validate_atlas()`:
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-right' has no frames",
+    "state 'running-left' has no frames", "state 'waving' has no frames",
+    "state 'jumping' has no frames", "state 'waiting' has no frames",
+    "state 'running' has no frames", "state 'review' has no frames"
+  ],
+  "filled_states": ["failed"]
+}
+```
+
+`ok: true`, zero errors — same clean geometry result as `review`/`waiting`'s
+rows (the un-keyed shadow patch is a background-removal artifact, not
+something `validate_atlas()` checks for).
+
+### Step 6 — visual gate evidence
+
+- `assets/keyframes/failed_row_contact_sheet.png` — all 8 row frames,
+  labeled `col{i}: pose{N}`, **sent to the user via SendUserFile**.
+- `assets/keyframes/failed_row_preview.gif` — looping animated preview
+  (280ms/frame, upscaled 3x), **sent to the user via SendUserFile**.
+- `assets/keyframes/failed_row_atlas_fragment.png` — full-size atlas image
+  used for `validate_atlas()`, `failed` row only.
+- `assets/keyframes/failed_row_report.json` — row order, all 8 hashes, full
+  `validate_atlas()` output, file paths.
+
+### Cost
+
+| | |
+|---|---|
+| Balance before (settled, = waiting addendum #3's post-run balance) | $6.8646 |
+| Balance after (settled, re-checked once `total_usage` had moved for all 3 calls) | $6.4435 |
+| **Spent this addendum (3 new `generate()` calls)** | **$0.4210** (~$0.1403/call, consistent with prior addenda's ~$0.14/call) |
+
+Full before/after readings (immediate + settled) in
+`assets/keyframes/failed_sequence_report.json`.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only
+  (`generate_pose_sequence` carries the same refusal guard as every prior
+  Phase 2B script; `build_state_row` is pure image processing, no
+  `HERMES_HOME` needed at all).
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical to every prior check in this doc**,
+  confirmed again before and after this addendum's 3 API calls.
+- Real `~/.hermes/pets/`: empty before and after. Full `find
+  /home/chegusan/.hermes -maxdepth 2` listing diffed before/after this
+  addendum's work — no changes.
+
+### Decision
+
+**Addendum #4 done, `failed` state only, awaiting human visual gate** on
+`assets/keyframes/failed_row_contact_sheet.png` and
+`assets/keyframes/failed_row_preview.gif` — **with the visual caveat above**
+(pose 3's un-keyed shadow patch, visible in columns 2 and 3). Per the task's
+explicit scope, stopped after `failed` — no other state was touched. If
+approved as-is, with the shadow patch accepted, or with a targeted retry of
+pose 3 only, the natural next step is the same pattern for the remaining 3
+states (`jumping`, `waving`, `running`), each needing only a new thin
+runner script.
+
+### Files changed (addendum #4)
+
+- `scripts/generate_failed_sequence.py` (new — thin `failed` runner).
+- `scripts/build_failed_row.py` (new — thin `failed` runner).
+- `assets/keyframes/raw_single_pose/failed_pose{1,2,3}.png` (new).
+- `assets/keyframes/processed/failed_pose{1,2,3}.png` (new).
+- `assets/keyframes/failed_sequence_report.json` (new).
+- `assets/keyframes/failed_row_atlas_fragment.png` (new).
+- `assets/keyframes/failed_row_contact_sheet.png` (new).
+- `assets/keyframes/failed_row_preview.gif` (new).
+- `assets/keyframes/failed_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).

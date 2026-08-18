@@ -1,0 +1,82 @@
+{
+  "state": "failed",
+  "provider": "openrouter",
+  "balance_before_run": {
+    "total_credits": 20,
+    "total_usage": 13.1354365,
+    "balance": 6.864563499999999
+  },
+  "poses": [
+    {
+      "name": "pose1",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/reference/jorgito_canonical.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito mildly confused and surprised, pose 1 of 3: standing upright with both arms down at its sides, torso leaned back slightly, head tilted to one side, eyebrows raised and eyes slightly wide, mouth in a small confused 'huh?' shape, as if something unexpected just happened -- no smoke, no props, a clear surprised-but-gentle first reaction. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 20.3,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_142115_f8166c0e.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/failed_pose1.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose1.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.1354365,
+        "balance": 6.864563499999999
+      }
+    },
+    {
+      "name": "pose2",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/failed_pose1.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito mildly confused, pose 2 of 3: standing upright, one arm now bent and raised up with the hand/paw scratching the top of its head, the other arm still down at its side, head tilted further and eyes looking upward and off to one side as if puzzling over the problem, eyebrows knit together in a comedic 'thinking hard about what went wrong' expression -- no smoke yet, clearly a different body pose from pose 1 (arm now up at the head, not down). The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 22.6,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_142138_f93f0be6.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/failed_pose2.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose2.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.1354365,
+        "balance": 6.864563499999999
+      }
+    },
+    {
+      "name": "pose3",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/failed_pose2.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito fully confused, pose 3 of 3: standing upright, both arms now raised up near its head in an exaggerated shrugging/puzzled gesture (palms/paws up and open), head tilted back slightly, eyes wide with a small comedic sweat-drop, a tiny single wisp of white smoke or steam puffing gently from just above its head, mouth open in a small 'uh-oh' shape -- gentle and cute, NOT scary or aggressive, clearly a different, bigger gesture than poses 1 and 2 (both arms up, small smoke puff present). The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 42.4,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_142220_4c2cac5a.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/failed_pose3.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose3.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.2738925,
+        "balance": 6.7261074999999995
+      }
+    }
+  ],
+  "balance_after_run_immediate": {
+    "total_credits": 20,
+    "total_usage": 13.2738925,
+    "balance": 6.7261074999999995
+  },
+  "spent_usd_immediate": 0.1385,
+  "processed_paths": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose3.png"
+  ],
+  "balance_after_run_settled": {
+    "total_credits": 20,
+    "total_usage": 13.5564665,
+    "balance": 6.443533499999999
+  },
+  "spent_usd_settled": 0.421,
+  "settled_note": "OpenRouter's /credits usage figure lags the actual charge by roughly a minute; re-checked once total_usage had moved for all 3 calls, consistent with review/waiting addenda."
+}

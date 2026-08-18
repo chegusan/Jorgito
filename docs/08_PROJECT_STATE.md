@@ -73,20 +73,39 @@ keyframes.
   rather than a strongly legible head turn (see the addendum for the
   contact-sheet crop). Not retried (one API call per pose, no
   retry/fallback, per guardrails).
+- Phase 2B addendum #4 — **`failed` row, DONE, awaiting human visual gate.**
+  Same generalized pattern applied to `failed` (row is 8 frames, per
+  `atlas.ROW_SPECS` — longer than `review`/`waiting`'s 6). 3 real chained
+  poses depicting a friendly confused/error reaction (neutral confused →
+  arm raised scratching head → both arms up with a small smoke puff), each
+  action description written to force a structurally different body pose
+  (learned from `waiting`'s "too subtle" caveat). Result: the 3 poses read
+  as clearly distinguishable at a glance, unlike `waiting`.
+  `_pingpong_order(3, 8)` = `[0,1,2,2,1,0,0,1]`, Phase 4 wobble applied on
+  top. `validate_atlas()` `ok: true`, 8/8 unique hashes. **$0.4210** for 3
+  new API calls (~$0.1403/call). Visual-gate evidence:
+  `assets/keyframes/failed_row_contact_sheet.png` /
+  `failed_row_preview.gif` (sent to the user). **Caveat for the visual
+  gate:** pose 3's raw generation includes a soft drop-shadow that didn't
+  fully chroma-key out — a small green patch is visible under the feet in
+  columns 2 and 3 (the two columns using pose 3). Not retried (one call per
+  pose, no retry/fallback, per guardrails).
 
 ## Active objective
 
 Waiting on the user's visual-gate judgment on addendum #3's `waiting` row
-(`assets/keyframes/waiting_row_contact_sheet.png` /
-`waiting_row_preview.gif`) before running the remaining 4 states with this
-same pattern. If rejected, options are: retry `waiting` with a stronger
-head-turn prompt (still one-call-per-pose, no fallback), accept the subtler
-variation as sufficient for a secondary/idle-style state, or fall back to
-Phase 2B's original 4 options (retry same model, try a different
+AND addendum #4's `failed` row
+(`assets/keyframes/{waiting,failed}_row_contact_sheet.png` /
+`{waiting,failed}_row_preview.gif`) before running the remaining 3 states
+(`jumping`, `waving`, `running`) with this same pattern. If `failed` is
+rejected on the shadow-patch caveat, options are: retry pose 3 only with a
+prompt that more strongly forbids any ground shadow, or accept the patch as
+a minor artifact. If rejected outright, or as a broader decision, fall back
+to Phase 2B's original 4 options (retry same model, try a different
 `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
 final, or tighten the row-strip prompt) — see
 `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not proceeding to the
-other 4 states automatically given real per-call cost.
+remaining 3 states automatically given real per-call cost.
 
 ## Confirmed decisions
 
