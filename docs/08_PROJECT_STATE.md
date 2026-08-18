@@ -104,22 +104,40 @@ keyframes.
   `phase2b-fix-failed-chromakey`, PR opened against
   `phase2b-hatch-pet-regen`. See the addendum in
   `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
+- Phase 2B addendum #6 — **`waving` row, DONE, awaiting human visual gate.**
+  Same generalized pattern (despill-protected by default since addendum #5)
+  applied to `waving` (real key/count confirmed from `atlas.ROW_SPECS`:
+  `("waving", 3, 4)` — 4 frames, the shortest row so far, NOT `wave`/6). 3
+  real chained poses (arm starting to raise → peak of the wave → mid-swing
+  on the opposite side), `validate_atlas()` `ok: true`, 4/4 unique hashes.
+  **$0.1418** for 3 new API calls. Visual-gate evidence:
+  `assets/keyframes/waving_row_contact_sheet.png` /
+  `waving_row_preview.gif` (sent to the user). **Caveat for the visual
+  gate:** pose 3 reads as "swept inward near the face" rather than a
+  dramatically opposite-side position — still visually distinct from poses
+  1/2 (different silhouette/height), but a weaker side-to-side read than
+  intended. Not retried (one call per pose, no retry/fallback, per
+  guardrails). Branch `phase2b-pose-sequence-wave`, PR opened against
+  `phase2b-fix-failed-chromakey`. See the addendum in
+  `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
 
 ## Active objective
 
-Waiting on the user's visual-gate judgment on addendum #3's `waiting` row
-AND addendum #4/#5's `failed` row
-(`assets/keyframes/{waiting,failed}_row_contact_sheet.png` /
-`{waiting,failed}_row_preview.gif`) before running the remaining 3 states
-(`jumping`, `waving`, `running`) with this same pattern. `failed`'s
+Waiting on the user's visual-gate judgment on addendum #3's `waiting` row,
+addendum #4/#5's `failed` row, AND addendum #6's `waving` row
+(`assets/keyframes/{waiting,failed,waving}_row_contact_sheet.png` /
+`{waiting,failed,waving}_row_preview.gif`) before running the remaining 2
+states (`jumping`, `running`) with this same pattern. `failed`'s
 shadow-patch caveat is resolved (addendum #5, zero-cost deterministic
-reprocessing) — the row's only remaining question for the human gate is
-pose-quality/identity, same as every other row. If rejected outright, or as
-a broader decision, fall back to Phase 2B's original 4 options (retry same
-model, try a different `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep
-Phase 3/4's Camino B as final, or tighten the row-strip prompt) — see
+reprocessing); `waving`'s only caveat is pose 3's weaker side-to-side read
+(still visually distinct, see addendum #6) — each row's remaining question
+for the human gate is pose-quality/identity, same as every other row. If
+rejected outright, or as a broader decision, fall back to Phase 2B's
+original 4 options (retry same model, try a different
+`OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
+final, or tighten the row-strip prompt) — see
 `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not proceeding to the
-remaining 3 states automatically given real per-call cost.
+remaining 2 states automatically given real per-call cost.
 
 ## Confirmed decisions
 

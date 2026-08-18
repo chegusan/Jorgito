@@ -1089,3 +1089,174 @@ human visual gate, the natural next step is applying the same
 `pose_sequence.py` + `state_row.py` pattern (now despill-protected by
 default) to the remaining 3 states (`jumping`, `waving`, `running`) — not
 started here, out of this fix's scope.
+
+---
+
+## Addendum #6 — `waving` row (3 poses, 4 frames)
+
+**Status: DONE, `waving` state only, awaiting human visual gate.** Applied
+the generalized pattern (`scripts/pose_sequence.py` + `scripts/state_row.py`,
+unmodified since addendum #5's despill fix, so this row benefits from that
+fix by default) to `waving`, per `docs/04_ASSET_SPEC.md`'s "Waving: Simple
+clear arm wave". Branch `phase2b-pose-sequence-wave`, forked from
+`phase2b-fix-failed-chromakey` (so this row's despill pipeline is the fixed
+one, no shadow-patch risk re-derived).
+
+### Step 1 — confirm `waving`'s real row key and frame count
+
+`agent.pet.generate.atlas.ROW_SPECS`: `("waving", 3, 4)` — row index 3, key
+is **`waving`** (not `wave`), **4 frames** (shorter than every other row
+generated so far: `review`/`waiting` are 6, `failed` is 8). Read directly
+from the real source
+(`/home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py`), not
+assumed — this project's established gotcha (`jumping`'s real key/count also
+differed from a naive guess) applied here too.
+
+### Step 2 — generate 3 real chained poses
+
+New `scripts/generate_waving_sequence.py` (thin runner over
+`pose_sequence.generate_pose_sequence`). Learning from `waiting`'s "too
+subtle" caveat (addendum #3), each action description pins a distinctly
+different arm silhouette/angle rather than a small variation on one pose:
+
+1. **pose1 (arm starting to raise):** one arm raised partway up and out to
+   the side, only about chest height, elbow bent, hand starting to open — a
+   clearly low, early-stage wave position. Other arm/tail resting naturally,
+   friendly smile.
+2. **pose2 (peak of the wave)**, grounded on canonical + pose1's raw output:
+   arm raised straight up high above the head, fully extended, hand wide
+   open palm-forward — the highest, most vertical point of the arm.
+3. **pose3 (mid-swing, opposite side)**, grounded on canonical + pose2's raw
+   output: arm swept diagonally to the opposite side of the body from where
+   it started, roughly shoulder height, hand open — intended as the far side
+   of a side-to-side swing, explicitly not a return to rest.
+
+All 3 calls succeeded (`imagegen.generate(n=1, ...)`, one call each, no
+retries, no fallback provider). Elapsed: 27.0s / 24.8s / 20.3s.
+
+**Result: visually distinct, with a caveat.** Direct inspection of the 3
+processed poses (side-by-side and cropped arm-region comparisons) confirms
+3 different arm silhouettes: pose1 is low and held away from the body
+(wide gesture), pose2 is the clear high peak, pose3 is mid-height with the
+elbow tucked closer to the head (narrower gesture, hand near the face) —
+not a byte-similar repeat of pose1 or pose2. **Caveat for the human gate:**
+pose3 reads as "arm swept inward near the face" more than "swept to the
+literal opposite side of the body" the prompt asked for — its overall
+height is closer to pose1's than to a dramatically different position.
+Judged as clearing the "unmistakably distinct" bar (three different
+silhouettes, not a subtle wobble) but not as strong a side-to-side read as
+the suggested progression intended. Not retried (one call per pose, no
+retry loop, per guardrails) — flagged as-is, same practice as
+`waiting`/`failed`'s caveats.
+
+### Step 3 — process through chroma-key/fit-to-cell (despill-protected)
+
+Same pipeline as every state since addendum #5:
+`_remove_background_despilled` (`atlas.remove_background(chroma_key=None,
+threshold=90.0)` + the border-flood despill extension) +
+`atlas._fit_to_cell()`. Output: `assets/keyframes/processed/waving_pose{1,2,3}.png`,
+each 192x208 RGBA. No shadow-patch or unkeyed-background defects observed
+in any of the 3 poses.
+
+### Step 4 — build the real `waving` row (4 frames, 3 real poses)
+
+New `scripts/build_waving_row.py` (thin runner over
+`state_row.build_state_row`). `_pingpong_order(3, 4)` = `[0, 1, 2, 2]`
+(pose1, pose2, pose3, pose3) — the shortest row built so far, so the base
+6-length ping-pong cycle (`[0,1,2,2,1,0]`) is truncated rather than
+repeated; the generalized helper handles this without any state-specific
+logic. Phase 4 `_vary()` wobble applied on top of each real pose (different
+wobble phase per column keeps columns 2/3 hash-distinct despite sharing
+pose3).
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 (arm starting to raise) | `00a8655454319163` |
+| 1 | pose 2 (peak of the wave) | `3780b1da4b1b5c05` |
+| 2 | pose 3 (mid-swing, opposite side) | `8e3f10e3943ac684` |
+| 3 | pose 3 (mid-swing, opposite side) | `64aead8fc5ce9f05` |
+
+**4/4 unique.**
+
+### Step 5 — validation
+
+Full-size (1536×1872) atlas image via `atlas.compose_atlas({"waving":
+frames})`, only the `waving` row filled. Hermes's real, unmodified
+`atlas.validate_atlas()`:
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-right' has no frames",
+    "state 'running-left' has no frames", "state 'jumping' has no frames",
+    "state 'failed' has no frames", "state 'waiting' has no frames",
+    "state 'running' has no frames", "state 'review' has no frames"
+  ],
+  "filled_states": ["waving"]
+}
+```
+
+`ok: true`, zero errors, 4/4 unique hashes == `waving`'s real frame count.
+
+### Step 6 — visual gate evidence
+
+- `assets/keyframes/waving_row_contact_sheet.png` — all 4 row frames,
+  labeled `col{i}: pose{N}`, **sent to the user via SendUserFile**.
+- `assets/keyframes/waving_row_preview.gif` — looping animated preview
+  (280ms/frame, upscaled 3x), **sent to the user via SendUserFile**.
+- `assets/keyframes/waving_row_atlas_fragment.png` — full-size atlas image
+  used for `validate_atlas()`, `waving` row only.
+- `assets/keyframes/waving_row_report.json` — row order, all 4 hashes, full
+  `validate_atlas()` output, file paths.
+
+### Cost
+
+| | |
+|---|---|
+| Balance before (settled) | $6.0193 |
+| Balance after (immediate; may lag actual settlement) | $5.8775 |
+| **Spent this addendum (3 new `generate()` calls)** | **$0.1418** (~$0.047/call — notably cheaper than prior addenda's ~$0.14/call; reported as measured, not adjusted) |
+
+Full before/after readings (immediate) in
+`assets/keyframes/waving_sequence_report.json`.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only
+  (`generate_pose_sequence` carries the same refusal guard as every prior
+  Phase 2B script; `build_state_row` is pure image processing, no
+  `HERMES_HOME` needed at all).
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical to every prior check in this doc**,
+  confirmed after this addendum's 3 API calls.
+- Real `~/.hermes/pets/`: empty, confirmed after this addendum's work.
+
+### Decision
+
+**Addendum #6 done, `waving` state only, awaiting human visual gate** on
+`assets/keyframes/waving_row_contact_sheet.png` and
+`assets/keyframes/waving_row_preview.gif` — **with the visual caveat
+above** (pose 3 reads as "swept inward near the face" rather than a
+dramatically opposite-side position, though still visually distinct from
+poses 1/2). Per the task's explicit scope, stopped after `waving` — no
+other state was touched. PR opened against `phase2b-fix-failed-chromakey`
+(this branch's base — already includes the despill fix, so the diff here
+is `waving`-only).
+
+### Files changed (addendum #6)
+
+- `scripts/generate_waving_sequence.py` (new — thin `waving` runner).
+- `scripts/build_waving_row.py` (new — thin `waving` runner).
+- `assets/keyframes/raw_single_pose/waving_pose{1,2,3}.png` (new).
+- `assets/keyframes/processed/waving_pose{1,2,3}.png` (new).
+- `assets/keyframes/waving_sequence_report.json` (new).
+- `assets/keyframes/waving_row_atlas_fragment.png` (new).
+- `assets/keyframes/waving_row_contact_sheet.png` (new).
+- `assets/keyframes/waving_row_preview.gif` (new).
+- `assets/keyframes/waving_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).

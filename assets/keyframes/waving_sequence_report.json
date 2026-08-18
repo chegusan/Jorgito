@@ -1,0 +1,75 @@
+{
+  "state": "waving",
+  "provider": "openrouter",
+  "balance_before_run": {
+    "total_credits": 20,
+    "total_usage": 13.9806925,
+    "balance": 6.0193075
+  },
+  "poses": [
+    {
+      "name": "pose1",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/reference/jorgito_canonical.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito starting a friendly wave, arm just beginning to lift: one arm raised partway up and slightly out to the side, only about chest height, elbow bent, hand starting to open, as if the wave is just beginning -- a clearly LOW, early-stage arm position, unmistakably different from a fully raised arm; the other arm resting naturally at the side, tail resting naturally, warm friendly smile, facing forward. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 27.0,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_191055_edf59f3e.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/raw_single_pose/waving_pose1.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/processed/waving_pose1.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.9806925,
+        "balance": 6.0193075
+      }
+    },
+    {
+      "name": "pose2",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/raw_single_pose/waving_pose1.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito at the peak of a big friendly wave: one arm raised straight up high above the head/shoulder, fully extended, hand wide open with palm facing forward in a clear, unmistakable wave gesture -- the arm at its highest, most vertical point, a dramatically different silhouette from a low partially-raised arm; the other arm resting naturally at the side, tail resting naturally, big warm friendly smile, facing forward. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 24.8,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_191121_8819ec99.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/raw_single_pose/waving_pose2.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/processed/waving_pose2.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.9806925,
+        "balance": 6.0193075
+      }
+    },
+    {
+      "name": "pose3",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/raw_single_pose/waving_pose2.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito mid-wave, arm swept to the opposite side at the far end of the swing: the waving arm bent and extended diagonally out and down to the OPPOSITE side of the body from where it started, roughly shoulder height, hand open in a clear wave gesture -- a distinctly different diagonal arm angle from both the low starting raise and the straight-up peak, reading as the far side of a side-to-side wave swing, NOT a return to a resting pose; the other arm resting naturally at the side, tail resting naturally, warm friendly smile, facing forward. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 20.3,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_191141_e9f30419.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/raw_single_pose/waving_pose3.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/processed/waving_pose3.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.9806925,
+        "balance": 6.0193075
+      }
+    }
+  ],
+  "balance_after_run_immediate": {
+    "total_credits": 20,
+    "total_usage": 14.1225105,
+    "balance": 5.877489499999999
+  },
+  "spent_usd_immediate": 0.1418,
+  "processed_paths": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/processed/waving_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/processed/waving_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-wave/assets/keyframes/processed/waving_pose3.png"
+  ]
+}
