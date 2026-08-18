@@ -19,15 +19,26 @@ keyframes.
   See `docs/phase_results/PHASE_1_RESULT.md`.
 - Phase 2 — PASS (Camino B chosen for the remaining states, with evidence).
   See `docs/phase_results/PHASE_2_RESULT.md`.
+- Phase 2B — **FAIL/BLOCKED**. After the user reviewed Phase 3/4's
+  deterministic `_vary()` animation (branch `phase-4-full-atlas`,
+  `docs/phase_results/PHASE_4_RESULT.md`) and judged it doesn't read as real
+  animation, Path A (`hatch_pet()`) was retried with real, user-funded
+  OpenRouter budget. `hatch_pet()` raised `GenerationError`
+  (`missing required animation row(s): running-right`) — only 4/8 generated
+  rows (`idle`, `waving`, `jumping`, `waiting`) sliced cleanly;
+  `running-right`/`failed`/`running`/`review` failed all 3 internal
+  attempts. **$2.4019 spent, no atlas produced, no pet installed.**
+  Real `~/.hermes` verified untouched before/after. See
+  `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` for the full per-state
+  breakdown and the 4 options put to the user.
 
 ## Active objective
 
-Get the user to externally generate the 5 remaining keyframes (`waiting`,
-`failed`, `jump`, `wave`, `running-right`) using the prompts already
-provided (base block + jorgito_canonical.png as reference), then dispatch
-Phase 3/4: generalize the deterministic processing script to the full
-8-state atlas (+ mirrored `running-left`), validate it, and build the final
-contact sheet for the Phase 3 visual gate.
+Waiting on the user to pick one of Phase 2B's 4 options (retry same model,
+try a different `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's
+Camino B as final, or tighten the row-strip prompt for one more attempt) —
+see `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not retrying
+automatically given the real per-attempt cost (~$2.40 this run).
 
 ## Confirmed decisions
 
@@ -70,11 +81,9 @@ contact sheet for the Phase 3 visual gate.
 
 ## Next action
 
-Waiting on the user to generate and hand over the 5 remaining raw keyframes
-(`waiting`, `failed`, `jump`, `wave`, `running-right`) using the prompts
-already given (base block + `jorgito_canonical.png` reference, magenta
-background). Once provided, dispatch an `implement` sub-agent for Phase 3/4:
-extend the Phase 1 processing script into a full 8-state atlas builder
-(including `running-left` as a horizontal mirror of `running-right`),
-validate it with Hermes's `atlas.validate_atlas()`, and produce the final
-contact sheet for the user's Phase 3 visual gate.
+Phase 3/4 (Camino B, full 8-state atlas via deterministic `_vary()`
+transform) already completed end-to-end on branch `phase-4-full-atlas` —
+see `docs/phase_results/PHASE_4_RESULT.md` on that branch. That work is
+unaffected by Phase 2B. Current blocker is Phase 2B: waiting on the user to
+choose one of its 4 options before any further `hatch_pet()` spend — see
+`docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.

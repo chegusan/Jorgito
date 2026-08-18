@@ -1,0 +1,65 @@
+{
+  "slug": "jorgito-hatch",
+  "provider": "openrouter",
+  "balance_before": {
+    "total_credits": 20,
+    "total_usage": 9.3143385,
+    "balance": 10.6856615
+  },
+  "status": "FAIL",
+  "error": "missing required animation row(s): running-right",
+  "elapsed_s": 192.7,
+  "balance_after": {
+    "total_credits": 20,
+    "total_usage": 11.7162085,
+    "balance": 8.2837915
+  },
+  "spent_usd": 2.4019,
+  "progress_log": [
+    {
+      "t": 12165.43,
+      "event": "row",
+      "detail": "waving:1:9"
+    },
+    {
+      "t": 12181.98,
+      "event": "row",
+      "detail": "idle:2:9"
+    },
+    {
+      "t": 12206.84,
+      "event": "row",
+      "detail": "jumping:3:9"
+    },
+    {
+      "t": 12239.34,
+      "event": "row",
+      "detail": "failed:4:9"
+    },
+    {
+      "t": 12262.59,
+      "event": "row",
+      "detail": "waiting:5:9"
+    },
+    {
+      "t": 12290.8,
+      "event": "row",
+      "detail": "running-right:6:9"
+    },
+    {
+      "t": 12298.43,
+      "event": "row",
+      "detail": "running:7:9"
+    },
+    {
+      "t": 12325.32,
+      "event": "row",
+      "detail": "review:8:9"
+    },
+    {
+      "t": 12325.32,
+      "event": "compose",
+      "detail": ""
+    }
+  ]
+}
