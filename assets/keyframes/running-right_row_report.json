@@ -1,0 +1,52 @@
+{
+  "state": "running-right",
+  "row_count": 8,
+  "row_pose_order": [
+    0,
+    1,
+    2,
+    2,
+    1,
+    0,
+    0,
+    1
+  ],
+  "pose_files": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose3.png"
+  ],
+  "frame_hashes": [
+    "66a4efff9e43dac7",
+    "e48faf9d240f1a82",
+    "47f3603eae80713c",
+    "f305977021e0e636",
+    "0567bd6f6433cfb1",
+    "ff666d96621c61a4",
+    "e08a8d555c820d09",
+    "2d42602357e5db7b"
+  ],
+  "unique_hash_count": 8,
+  "validate_atlas": {
+    "ok": true,
+    "width": 1536,
+    "height": 1872,
+    "errors": [],
+    "warnings": [
+      "state 'idle' has no frames",
+      "state 'running-left' has no frames",
+      "state 'waving' has no frames",
+      "state 'jumping' has no frames",
+      "state 'failed' has no frames",
+      "state 'waiting' has no frames",
+      "state 'running' has no frames",
+      "state 'review' has no frames"
+    ],
+    "filled_states": [
+      "running-right"
+    ]
+  },
+  "atlas_fragment_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/running-right_row_atlas_fragment.png",
+  "contact_sheet_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/running-right_row_contact_sheet.png",
+  "gif_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/running-right_row_preview.gif"
+}

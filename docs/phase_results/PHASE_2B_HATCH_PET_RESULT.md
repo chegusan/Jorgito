@@ -1259,4 +1259,185 @@ is `waving`-only).
 - `assets/keyframes/waving_row_preview.gif` (new).
 - `assets/keyframes/waving_row_report.json` (new).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+
+## Addendum #7 — `running-right` row (3 poses, 8 frames) — LAST Phase 2B state
+
+**Status: DONE, `running-right` state only, awaiting human visual gate.**
+Applied the generalized pattern (`scripts/pose_sequence.py` +
+`scripts/state_row.py`, unmodified since addendum #5's despill fix) to
+`running-right`. This is the **9th and last** Hermes pet state generated
+in Phase 2B — `idle`/`running`(digging)/`review`/`waiting`/`failed`/
+`jumping`/`waving` already approved, `running-left` is a free horizontal
+mirror of this row and is not separately generated. Branch
+`phase2b-pose-sequence-running-right`, forked from `phase2b-pose-sequence-wave`.
+
+### Step 1 — confirm `running-right`'s real row key and frame count
+
+`agent.pet.generate.atlas.ROW_SPECS`: `("running-right", 1, 8)` — row index
+1, key is **`running-right`** (hyphenated, not `running_right`/`run_right`),
+**8 frames** — the longest row generated in Phase 2B so far (tied with
+`failed`). Read directly from the real source
+(`/home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py`), not
+assumed — this project's established gotcha (`jumping`'s and `waving`'s
+real key/count also differed from a naive guess). Note `running` (row 7, 6
+frames) is a *different* state — the in-place working/digging pose, not
+locomotion — confirmed not to collide with this row.
+
+### Step 2 — generate 3 real chained poses
+
+New `scripts/generate_running_right_sequence.py` (thin runner over
+`pose_sequence.generate_pose_sequence`). A three-pose running stride cycle,
+each action description pinning a clearly different leg/arm silhouette
+(learned from `waiting`'s "too subtle" caveat):
+
+1. **pose1 (stride, leg 1 forward):** right leg reaching far forward about
+   to plant, left leg extended straight back, arms in opposite running
+   swing, forward lean, tail trailing — a clearly open, wide-stride
+   silhouette.
+2. **pose2 (compact passing position)**, grounded on canonical + pose1's
+   raw output: both legs momentarily close together/crossing under the
+   body, more upright/compact than the reaching stride, arms tucked —
+   a clearly compact, legs-together silhouette.
+3. **pose3 (stride, leg 2 forward — mirror of pose1)**, grounded on
+   canonical + pose2's raw output: left leg reaching far forward, right leg
+   back, arms swapped — the mirror-opposite leg placement of pose1.
+
+All 3 calls succeeded (`imagegen.generate(n=1, ...)`, one call each, no
+retries, no fallback provider). Elapsed: 21.3s / 38.9s / 32.9s.
+
+**Result: visually distinct, with a caveat.** Pairwise pixel-diff (>40
+per-channel-sum threshold, over the full 192x208 processed cell) measured
+41.5-42.4% of pixels differing between the "stride" poses (1, 3) and the
+"passing" pose (2), and 38.0% between poses 1 and 3 themselves despite
+being mirror-intended — comfortably clearing the "unmistakably distinct"
+bar (compare to a subtle wobble, which would read well under 10%), and
+bounding-box extents confirm a real stance change (pose1 top=15px, more
+crouched/lower; poses 2/3 top=5px, more upright). **Caveat for the human
+gate:** the model rendered all three poses with the character facing/
+leaning toward the LEFT of the frame (matching its own internal
+left-facing convention for this sprite, as seen in every other approved
+state) rather than the prompted rightward-facing run direction, and the
+stride reads more as a energetic trot/hop than a dramatic full sprint
+stride. Not retried (one call per pose, no retry loop, per guardrails) —
+flagged as-is, same practice as `waiting`/`failed`/`waving`'s caveats.
+Since `running-left` is derived from this row via horizontal mirror (not
+separately generated), a left-facing `running-right` source is a real
+naming/direction mismatch worth the human gate's attention, not just a
+style nit.
+
+### Step 3 — process through chroma-key/fit-to-cell (despill-protected)
+
+Same pipeline as every state since addendum #5:
+`_remove_background_despilled` (`atlas.remove_background(chroma_key=None,
+threshold=90.0)` + the border-flood despill extension) +
+`atlas._fit_to_cell()`. Output:
+`assets/keyframes/processed/running-right_pose{1,2,3}.png`, each 192x208
+RGBA. No shadow-patch or unkeyed-background defects observed in any of the
+3 poses (confirmed by direct inspection of the contact sheet — clean
+transparency, no magenta/green fringe).
+
+### Step 4 — build the real `running-right` row (8 frames, 3 real poses)
+
+New `scripts/build_running_right_row.py` (thin runner over
+`state_row.build_state_row`). `_pingpong_order(3, 8)` = `[0, 1, 2, 2, 1, 0,
+0, 1]` — the base 6-length ping-pong cycle (`[0,1,2,2,1,0]`) cycles around
+to fill the extra 2 columns, same generalized behavior used for every
+prior row, no state-specific logic needed.
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 (stride, leg 1 forward) | `66a4efff9e43dac7` |
+| 1 | pose 2 (compact passing) | `e48faf9d240f1a82` |
+| 2 | pose 3 (stride, leg 2 forward) | `47f3603eae80713c` |
+| 3 | pose 3 (stride, leg 2 forward) | `f305977021e0e636` |
+| 4 | pose 2 (compact passing) | `0567bd6f6433cfb1` |
+| 5 | pose 1 (stride, leg 1 forward) | `ff666d96621c61a4` |
+| 6 | pose 1 (stride, leg 1 forward) | `e08a8d555c820d09` |
+| 7 | pose 2 (compact passing) | `2d42602357e5db7b` |
+
+**8/8 unique.**
+
+### Step 5 — validation
+
+Full-size (1536x1872) atlas image via `atlas.compose_atlas({"running-right":
+frames})`, only the `running-right` row filled. Hermes's real, unmodified
+`atlas.validate_atlas()`:
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-left' has no frames",
+    "state 'waving' has no frames", "state 'jumping' has no frames",
+    "state 'failed' has no frames", "state 'waiting' has no frames",
+    "state 'running' has no frames", "state 'review' has no frames"
+  ],
+  "filled_states": ["running-right"]
+}
+```
+
+`ok: true`, zero errors, 8/8 unique hashes == `running-right`'s real frame
+count.
+
+### Step 6 — visual gate evidence
+
+- `assets/keyframes/running-right_row_contact_sheet.png` — all 8 row
+  frames, labeled `col{i}: pose{N}`, **sent to the user via SendUserFile**.
+- `assets/keyframes/running-right_row_preview.gif` — looping animated
+  preview (280ms/frame, upscaled 3x), **sent to the user via SendUserFile**.
+- `assets/keyframes/running-right_row_atlas_fragment.png` — full-size atlas
+  image used for `validate_atlas()`, `running-right` row only.
+- `assets/keyframes/running-right_row_report.json` — row order, all 8
+  hashes, full `validate_atlas()` output, file paths.
+
+### Cost
+
+| | |
+|---|---|
+| Balance before (immediate) | $5.5956 |
+| Balance after (immediate; may lag actual settlement) | $5.3142 |
+| **Spent this addendum (3 new `generate()` calls)** | **$0.2813** (~$0.094/call) |
+
+Full before/after readings (immediate) in
+`assets/keyframes/running-right_sequence_report.json`.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only
+  (`generate_pose_sequence` carries the same refusal guard as every prior
+  Phase 2B script; `build_state_row` is pure image processing, no
+  `HERMES_HOME` needed at all).
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical to every prior check in this doc**,
+  confirmed after this addendum's 3 API calls.
+- Real `~/.hermes/pets/`: empty, confirmed after this addendum's work.
+
+### Decision
+
+**Addendum #7 done, `running-right` state only, awaiting human visual
+gate** on `assets/keyframes/running-right_row_contact_sheet.png` and
+`assets/keyframes/running-right_row_preview.gif` — **with the visual
+caveat above** (left-facing render despite a rightward-facing prompt; more
+trot than dramatic sprint stride — though still visually distinct pose-to-
+pose). This is the last of the 9 Hermes pet states for Phase 2B; pending
+this gate's approval, all real-pose row generation work for this phase is
+complete. PR opened against `phase2b-pose-sequence-wave` (this branch's
+base).
+
+### Files changed (addendum #7)
+
+- `scripts/generate_running_right_sequence.py` (new — thin `running-right`
+  runner).
+- `scripts/build_running_right_row.py` (new — thin `running-right` runner).
+- `assets/keyframes/raw_single_pose/running-right_pose{1,2,3}.png` (new).
+- `assets/keyframes/processed/running-right_pose{1,2,3}.png` (new).
+- `assets/keyframes/running-right_sequence_report.json` (new).
+- `assets/keyframes/running-right_row_atlas_fragment.png` (new).
+- `assets/keyframes/running-right_row_contact_sheet.png` (new).
+- `assets/keyframes/running-right_row_preview.gif` (new).
+- `assets/keyframes/running-right_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).

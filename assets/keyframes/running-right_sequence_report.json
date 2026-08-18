@@ -1,0 +1,75 @@
+{
+  "state": "running-right",
+  "provider": "openrouter",
+  "balance_before_run": {
+    "total_credits": 20,
+    "total_usage": 14.4044165,
+    "balance": 5.5955835
+  },
+  "poses": [
+    {
+      "name": "pose1",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/reference/jorgito_canonical.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito mid-run stride, facing and moving toward the right side of the frame: right leg reaching far forward and bent at the knee about to plant, left leg extended straight back behind the body, arms in an opposite running swing (left arm forward, right arm back), torso leaning forward into the run with clear forward momentum, tail trailing straight out behind for balance, focused energetic expression -- a clearly OPEN, wide-stride leg silhouette, unmistakably different from legs together or crossing. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 21.3,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_204530_0085f54a.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/raw_single_pose/running-right_pose1.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose1.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 14.4044165,
+        "balance": 5.5955835
+      }
+    },
+    {
+      "name": "pose2",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/raw_single_pose/running-right_pose1.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito mid-run passing position, facing and moving toward the right side of the frame, grounded on the previous stride pose: both legs momentarily close together and crossing directly underneath the body (the driving/support phase of the stride, knees bent and stacked near the body's centerline), body slightly higher and more upright/compact than the reaching stride, arms swung to a tucked mid-swing position close to the torso, a dynamic sense of quick motion -- a clearly COMPACT, legs-together silhouette, unmistakably different from the wide reaching stride. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 38.9,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_204609_ff0d9623.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/raw_single_pose/running-right_pose2.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose2.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 14.4044165,
+        "balance": 5.5955835
+      }
+    },
+    {
+      "name": "pose3",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/raw_single_pose/running-right_pose2.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito mid-run stride, facing and moving toward the right side of the frame, grounded on the previous passing pose: left leg now reaching far forward and bent at the knee about to plant, right leg extended straight back behind the body -- the mirror-opposite leg placement of the first stride pose -- arms swapped to the opposite running swing (right arm forward, left arm back), torso leaning forward into the run with clear forward momentum, tail trailing straight out behind for balance, focused energetic expression -- a clearly OPEN, wide-stride leg silhouette mirrored from the first pose, unmistakably different from the compact passing position. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 32.9,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_204643_4cb1abb4.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/raw_single_pose/running-right_pose3.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose3.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 14.4044165,
+        "balance": 5.5955835
+      }
+    }
+  ],
+  "balance_after_run_immediate": {
+    "total_credits": 20,
+    "total_usage": 14.6857605,
+    "balance": 5.314239499999999
+  },
+  "spent_usd_immediate": 0.2813,
+  "processed_paths": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/processed/running-right_pose3.png"
+  ]
+}
