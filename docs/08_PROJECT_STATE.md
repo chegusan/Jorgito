@@ -41,9 +41,9 @@ keyframes.
   wasn't real animation) but the pose it produced is now "pose 1" of that
   addendum's 3-pose sequence.
 - Phase 2B addendum #2 — **real pose variation for `review`'s row, DONE,
-  awaiting human visual gate.** Human feedback on addendum #1: one static
-  pose expanded across a row via deterministic wobble (Phase 4's `_vary()`)
-  isn't real animation. Generated 2 additional real poses (3 total: book
+  human gave PASS.** Human feedback on addendum #1: one static pose expanded
+  across a row via deterministic wobble (Phase 4's `_vary()`) isn't real
+  animation. Generated 2 additional real poses (3 total: book
   open/starting → mid-page-turn → page turned further), each `generate()`
   call grounded on canonical + the previous pose's raw output (chained
   continuity), then built the real 6-frame `review` row (frame count
@@ -55,18 +55,38 @@ keyframes.
   `assets/keyframes/review_row_contact_sheet.png` (labeled) and
   `assets/keyframes/review_row_preview.gif` (looping). See the addendum in
   `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
+- Phase 2B addendum #3 — **refactor to state-parameterized functions +
+  `waiting` row, DONE, awaiting human visual gate.** Generalized addendum
+  #2's `review`-only scripts into `scripts/pose_sequence.py`
+  (`generate_pose_sequence`) + `scripts/state_row.py` (`build_state_row`),
+  so each further state needs only a thin ~30-line runner script. Refactor
+  verified byte-identical against `review`'s committed outputs (dry
+  re-run of the row-assembly step, zero `git diff`, same 6/6 hashes) — no
+  new spend on `review`. Applied the pattern to `waiting` (row also 6
+  frames, per `atlas.ROW_SPECS`): 3 real chained poses (centered/settled →
+  glance left → glance right), `validate_atlas()` `ok: true`, 6/6 unique
+  hashes. **$0.4265** for 3 new API calls (~$0.1422/call). Visual-gate
+  evidence: `assets/keyframes/waiting_row_contact_sheet.png` /
+  `waiting_row_preview.gif`. **Caveat for the visual gate:** the 3 poses
+  came out visually closer together than the "look left / look right"
+  prompt asked for — differences are mostly in stance/tail/eye direction
+  rather than a strongly legible head turn (see the addendum for the
+  contact-sheet crop). Not retried (one API call per pose, no
+  retry/fallback, per guardrails).
 
 ## Active objective
 
-Waiting on the user's visual-gate judgment on addendum #2's `review` row
-(`assets/keyframes/review_row_contact_sheet.png` /
-`review_row_preview.gif`) before running the remaining 7 states with this
-same multi-pose-per-row pattern. If rejected, fall back to Phase 2B's
-original 4 options (retry same model, try a different
+Waiting on the user's visual-gate judgment on addendum #3's `waiting` row
+(`assets/keyframes/waiting_row_contact_sheet.png` /
+`waiting_row_preview.gif`) before running the remaining 4 states with this
+same pattern. If rejected, options are: retry `waiting` with a stronger
+head-turn prompt (still one-call-per-pose, no fallback), accept the subtler
+variation as sufficient for a secondary/idle-style state, or fall back to
+Phase 2B's original 4 options (retry same model, try a different
 `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
 final, or tighten the row-strip prompt) — see
 `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not proceeding to the
-other 7 states automatically given real per-call cost.
+other 4 states automatically given real per-call cost.
 
 ## Confirmed decisions
 

@@ -512,3 +512,234 @@ this same pattern (not attempted here).
 - `assets/keyframes/review_row_report.json` (new).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).
+
+---
+
+## Addendum #3 — refactor to reusable functions + `waiting` row
+
+**Status: DONE, `waiting` state only, awaiting human visual gate.** Human
+gave PASS on addendum #2's `review` row. Per the task, before touching a
+second state: generalize addendum #2's `review`-only scripts (they were
+written for one state, not parameterized) so the remaining 4 states don't
+each need a new near-duplicate ~250-line pair of files. Then apply the
+validated pattern to `waiting`.
+
+### Step 0 — refactor
+
+Two new modules replace the state-specific logic in
+`scripts/generate_review_sequence.py` / `scripts/build_review_row.py`:
+
+- **`scripts/pose_sequence.py`** (new, 211 lines) —
+  `generate_pose_sequence(state, action_descriptions, n_poses)`. Same
+  chaining/grounding/processing as addendum #2's script (pose 0 grounds on
+  `BASE_IMAGE` alone, pose *i>0* grounds on `BASE_IMAGE` + pose *i-1*'s raw
+  output; one `imagegen.generate(n=1, ...)` call per pose, no retry, no
+  fallback; same chroma-key/fit-to-cell processing), generalized to take the
+  state name and per-pose action text as arguments instead of being
+  hardcoded to `review`'s page-turn prompts.
+- **`scripts/state_row.py`** (new, 223 lines) —
+  `build_state_row(state, poses, row_frame_count)`. Same ping-pong + Phase 4
+  `_vary()` wobble + `atlas.validate_atlas()` + contact-sheet/GIF/report
+  logic as addendum #2's `build_review_row.py`, generalized: pose count and
+  row length are no longer hardcoded to 3-into-6, via a new
+  `_pingpong_order(n_poses, row_frame_count)` helper (`[0,1,...,n-1,n-1,...,
+  1,0]`, cycling if the row doesn't divide evenly by `2*n_poses` — for
+  `n_poses=3, row_frame_count=6` this reduces to exactly `[0,1,2,2,1,0]`,
+  `review`'s original order). `_vary()` itself is still copied verbatim,
+  unmodified, from `phase-4-full-atlas`'s `scripts/full_atlas.py`
+  (commit `7353a27`).
+
+Each further state now needs only a ~30-line runner script (see
+`scripts/generate_waiting_sequence.py` / `scripts/build_waiting_row.py`
+below) — state name, per-pose action text, and pose-file paths — instead of
+a new copy of the full generation/assembly logic. Both new modules stay
+inside this project's 100-300-line-per-module discipline.
+
+`scripts/generate_review_sequence.py` and `scripts/generate_single_pose.py`
+(the scripts that actually produced `review`'s 3 committed poses) are left
+untouched, not refactored into thin wrappers over the new module. Reasoning:
+they document exactly what commands produced the already-committed,
+human-approved `review` assets (different, non-uniform filenames —
+`review_singlepose_pilot.png` from a separate pilot script, then
+`review_pose2_midturn.png`/`review_pose3_turned.png`); rewriting them as thin
+wrappers without ever re-running them (re-running costs real API money,
+explicitly out of scope here) would add unverified code to the repo. Only
+`scripts/build_review_row.py` — pure image processing, no network, no
+`HERMES_HOME` — was rewritten as a thin wrapper, because it's the piece that
+*is* safe to actually re-run for verification.
+
+### Step 0 — dry-check: refactor reproduces `review` unchanged
+
+`scripts/build_review_row.py` rewritten as a ~30-line config-only wrapper
+calling `state_row.build_state_row("review", POSE_FILES, 6)` against the
+same 3 already-committed processed review poses. Re-ran it (no API calls,
+no `HERMES_HOME` — pure Pillow processing):
+
+```
+review row: 6 frames, 6/6 unique hashes
+  col0 (pose1): fd6e4f6455889d04
+  col1 (pose2): e1479549f5bf67b3
+  col2 (pose3): ebd74364db9e3ff6
+  col3 (pose3): e91911268077781b
+  col4 (pose2): 8bf546ebff5d0e11
+  col5 (pose1): 3bc84d95348d49fe
+```
+
+Identical to addendum #2's original 6 hashes. `git status --porcelain --
+assets/keyframes/` showed **zero diff** after the re-run — the regenerated
+`review_row_atlas_fragment.png`, `review_row_contact_sheet.png`,
+`review_row_preview.gif`, and `review_row_report.json` are byte-for-byte
+identical (same md5s) to the committed addendum #2 outputs. The generalized
+code reproduces `review`'s exact result; no new `review` spend.
+
+### Step 1 — confirm `waiting`'s row frame count
+
+`agent.pet.generate.atlas.ROW_SPECS`: `("waiting", 6, 6)` — row index 6, **6
+frames**, same as `review`. `docs/04_ASSET_SPEC.md` / `Jorgito  Plan.md`:
+"Waiting: Still/sitting pose with small eye/head movement" /
+"Jorgito quieto/sentado; mirada de espera; movimiento mínimo."
+
+### Step 2 — generate 3 real chained poses
+
+New `scripts/generate_waiting_sequence.py` (thin runner over
+`pose_sequence.generate_pose_sequence`). Three actions, a centered →
+glance-left → glance-right micro-progression:
+
+1. **pose1 (centered/settled):** "sitting calmly in a relaxed, upright
+   posture, hands/feet settled and still, head facing forward, calm neutral
+   expression, no props, as if quietly waiting for something to happen."
+2. **pose2 (glance left)**, grounded on canonical + pose1's raw output:
+   "sitting calmly in the exact same relaxed, upright posture as before,
+   only the head turned and tilted gently to look off toward the left...
+   as if checking whether something is coming from that direction."
+3. **pose3 (glance right)**, grounded on canonical + pose2's raw output:
+   same posture, head turned/tilted to look right instead.
+
+All 3 calls succeeded (`imagegen.generate(n=1, ...)`, one call each, no
+retries, no fallback provider). Elapsed: 23.4s / 50.8s / 52.1s.
+
+**Visual note for the human gate:** the 3 poses came out visually closer
+together than the prompt asked for. All three retain essentially the same
+3/4-left body orientation; the differences that came through are in stance
+(front-paw/seated posture shifts slightly), tail curl, and eye direction,
+rather than a strongly legible head-turn toward each side. This wasn't
+retried — one API call per pose, no retry loop, no fallback provider, per
+this project's guardrails — so it's reported as-is for the human to judge,
+same as every other visual gate in this project.
+
+### Step 3 — process through chroma-key/fit-to-cell
+
+Same pipeline as `review`'s poses: `atlas.remove_background(rgba,
+chroma_key=None, threshold=90.0)` (auto-detect backdrop, correct for
+lossless PNG generator output) + `atlas._fit_to_cell()`, applied inline
+inside `generate_pose_sequence` immediately after each successful call.
+Output: `assets/keyframes/processed/waiting_pose{1,2,3}.png`, each 192x208
+RGBA.
+
+### Step 4 — build the real `waiting` row
+
+New `scripts/build_waiting_row.py` (thin runner over
+`state_row.build_state_row`). Ping-pong order `_pingpong_order(3, 6)` =
+`[0,1,2,2,1,0]` (identical formula to `review`'s row), Phase 4 `_vary()`
+wobble applied on top of each real pose:
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 (centered) | `d20da4762b777bd7` |
+| 1 | pose 2 (glance left) | `8e68447ef865b50f` |
+| 2 | pose 3 (glance right) | `0ed1208169dbf00b` |
+| 3 | pose 3 (glance right) | `b9177f31632bcb0d` |
+| 4 | pose 2 (glance left) | `180f3fe216b26ff1` |
+| 5 | pose 1 (centered) | `c649d95a17bbd0e1` |
+
+**6/6 unique.**
+
+### Step 5 — validation
+
+Full-size (1536×1872) atlas image via `atlas.compose_atlas({"waiting":
+frames})`, only the `waiting` row filled. Hermes's real, unmodified
+`atlas.validate_atlas()`:
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-right' has no frames",
+    "state 'running-left' has no frames", "state 'waving' has no frames",
+    "state 'jumping' has no frames", "state 'failed' has no frames",
+    "state 'running' has no frames", "state 'review' has no frames"
+  ],
+  "filled_states": ["waiting"]
+}
+```
+
+`ok: true`, zero errors — same clean result as `review`'s row.
+
+### Step 6 — visual gate evidence
+
+- `assets/keyframes/waiting_row_contact_sheet.png` — all 6 row frames,
+  labeled `col{i}: pose{N}`, sent to the user.
+- `assets/keyframes/waiting_row_preview.gif` — looping animated preview
+  (280ms/frame, upscaled 3x), sent to the user.
+- `assets/keyframes/waiting_row_atlas_fragment.png` — full-size atlas image
+  used for `validate_atlas()`, waiting row only.
+- `assets/keyframes/waiting_row_report.json` — row order, all 6 hashes,
+  full `validate_atlas()` output, file paths.
+
+### Cost
+
+| | |
+|---|---|
+| Balance before (settled, = review addendum #2's post-run balance) | $7.2911 |
+| Balance after (settled, re-checked once `total_usage` had moved for all 3 calls) | $6.8646 |
+| **Spent this addendum (3 new `generate()` calls)** | **$0.4265** (~$0.1422/call, consistent with `review`'s ~$0.1411-0.1415/call) |
+
+Full before/after readings (immediate + settled) in
+`assets/keyframes/waiting_sequence_report.json`.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only
+  (`generate_pose_sequence` carries the same refusal guard as every prior
+  Phase 2B script; `build_state_row` is pure image processing, no
+  `HERMES_HOME` needed at all).
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical to every prior check in this doc**,
+  confirmed again before and after this addendum's 3 API calls.
+- Real `~/.hermes/pets/`: empty before and after. Full `find
+  /home/chegusan/.hermes -maxdepth 2` listing diffed before/after this
+  addendum's work — no changes.
+
+### Decision
+
+**Addendum #3 done, `waiting` state only, awaiting human visual gate** on
+`assets/keyframes/waiting_row_contact_sheet.png` and
+`assets/keyframes/waiting_row_preview.gif` — **with the visual caveat above**
+(poses read as a subtler variation than a clear left/right head-turn). Per
+the task's explicit scope, stopped after `waiting` — no other state was
+touched. If approved as-is or with the caveat accepted, the natural next
+step is the same pattern (`generate_pose_sequence` + `build_state_row`) for
+the remaining 4 states (`failed`, `jumping`, `waving`, `running`), each
+needing only a new thin runner script.
+
+### Files changed (addendum #3)
+
+- `scripts/pose_sequence.py` (new — generalized pose-sequence generation).
+- `scripts/state_row.py` (new — generalized row assembly).
+- `scripts/build_review_row.py` (rewritten as a thin wrapper over
+  `state_row.build_state_row`; re-run, byte-identical to addendum #2's
+  committed outputs — see Step 0).
+- `scripts/generate_waiting_sequence.py` (new — thin `waiting` runner).
+- `scripts/build_waiting_row.py` (new — thin `waiting` runner).
+- `assets/keyframes/raw_single_pose/waiting_pose{1,2,3}.png` (new).
+- `assets/keyframes/processed/waiting_pose{1,2,3}.png` (new).
+- `assets/keyframes/waiting_sequence_report.json` (new).
+- `assets/keyframes/waiting_row_atlas_fragment.png` (new).
+- `assets/keyframes/waiting_row_contact_sheet.png` (new).
+- `assets/keyframes/waiting_row_preview.gif` (new).
+- `assets/keyframes/waiting_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).
