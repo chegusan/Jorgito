@@ -31,21 +31,37 @@ keyframes.
   Real `~/.hermes` verified untouched before/after. See
   `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` for the full per-state
   breakdown and the 4 options put to the user.
-- Phase 2B addendum — **single-pose pilot, `review` state only, DONE,
-  awaiting human visual gate.** Instead of a multi-pose row strip per state,
-  generate ONE centered pose per API call
-  (`imagegen.generate(n=1, ...)`, already single-image-per-call). Piloted on
-  `review` (one of Phase 2B's 4 failed states) to test whether this sidesteps
-  the segmentation problem. Result: clean single-subject output, no
-  segmentation artifacts, **$0.1415** (vs. ~$2.40 for the row-strip run).
-  Preview for the visual gate: `assets/keyframes/pilot_review_single_pose_preview.png`.
-  See the addendum in `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
+- Phase 2B addendum #1 — **single-pose pilot, `review` state only, DONE.**
+  Instead of a multi-pose row strip per state, generate ONE centered pose per
+  API call (`imagegen.generate(n=1, ...)`, already single-image-per-call).
+  Piloted on `review` (one of Phase 2B's 4 failed states) to test whether
+  this sidesteps the segmentation problem. Result: clean single-subject
+  output, no segmentation artifacts, **$0.1415** (vs. ~$2.40 for the
+  row-strip run). Superseded by addendum #2 below (single wobbled pose
+  wasn't real animation) but the pose it produced is now "pose 1" of that
+  addendum's 3-pose sequence.
+- Phase 2B addendum #2 — **real pose variation for `review`'s row, DONE,
+  awaiting human visual gate.** Human feedback on addendum #1: one static
+  pose expanded across a row via deterministic wobble (Phase 4's `_vary()`)
+  isn't real animation. Generated 2 additional real poses (3 total: book
+  open/starting → mid-page-turn → page turned further), each `generate()`
+  call grounded on canonical + the previous pose's raw output (chained
+  continuity), then built the real 6-frame `review` row (frame count
+  confirmed from Hermes's own `atlas.ROW_SPECS`) in ping-pong order
+  (`[1,2,3,3,2,1]`) with the Phase 4 wobble applied on top of each real pose
+  (not instead of it). Validated with Hermes's real `atlas.validate_atlas()`
+  (`ok: true`, review row only). 6/6 unique frame hashes. **$0.2823** for 2
+  new API calls. Visual gate evidence:
+  `assets/keyframes/review_row_contact_sheet.png` (labeled) and
+  `assets/keyframes/review_row_preview.gif` (looping). See the addendum in
+  `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
 
 ## Active objective
 
-Waiting on the user's visual-gate judgment on the single-pose pilot preview
-(`assets/keyframes/pilot_review_single_pose_preview.png`) before running the
-remaining 7 states with this approach. If rejected, fall back to Phase 2B's
+Waiting on the user's visual-gate judgment on addendum #2's `review` row
+(`assets/keyframes/review_row_contact_sheet.png` /
+`review_row_preview.gif`) before running the remaining 7 states with this
+same multi-pose-per-row pattern. If rejected, fall back to Phase 2B's
 original 4 options (retry same model, try a different
 `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
 final, or tighten the row-strip prompt) — see

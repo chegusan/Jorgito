@@ -296,3 +296,219 @@ out of scope for this single-state pilot).
   paths).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).
+
+---
+
+## Addendum #2 — real pose variation for `review` (3 poses, ping-pong row)
+
+### Problem with addendum #1
+
+The single-pose pilot above fixed identity/quality (clean single-subject
+output, no segmentation artifacts) but the human reviewer flagged a real
+gap: `scripts/build_full_atlas.py` (on `phase-4-full-atlas`) only ever had
+**one** real source keyframe per state, expanded to a row's full frame count
+via `_vary()` — a deterministic sine-driven bob/tilt/scale wobble
+(cross-reviewed and fixed in Phase 4, commit `7353a27`, to stop mirrored
+columns collapsing to identical hashes). That wobble guarantees frame
+hashes aren't byte-identical, but it is not real animation: every column is
+the *same pose*, nudged. The human wants genuine pose variation — for
+`review`, the book shown at different page-turn positions across the row,
+not one photo wobbled.
+
+### Step 1 — real row frame count for `review`
+
+Checked the real Hermes source directly (read-only,
+`/home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py`,
+`ROW_SPECS`):
+
+```python
+ROW_SPECS: list[tuple[str, int, int]] = [
+    ("idle", 0, 6),
+    ("running-right", 1, 8),
+    ("running-left", 2, 8),
+    ("waving", 3, 4),
+    ("jumping", 4, 5),
+    ("failed", 5, 8),
+    ("waiting", 6, 6),
+    ("running", 7, 6),
+    ("review", 8, 6),
+]
+```
+
+**`review` requires exactly 6 frames.** Cross-checked against the already-
+validated Phase 4 full-atlas run on `phase-4-full-atlas`
+(`PHASE_4_RESULT.md`'s `validate_atlas()` output lists `review=6` in its
+per-state frame-count breakdown) — same number, same source of truth
+(`atlas.ROW_SPECS`), not re-derived independently.
+
+### Step 2 — plan: 3 real poses (not 6), chained references, ping-pong row
+
+Per the task's cost discipline (~1 generation attempt per meaningful visual
+unit) and "minimal, use judgment": generated **2 additional** real poses on
+top of the existing pilot pose, for **3 real poses total** covering a
+page-turn progression — book open/starting (pose 1, existing) → mid-page-
+turn (pose 2, new) → page turned further along (pose 3, new). 3 was judged
+sufficient to read as real progression without tripling cost for a 6-frame
+row where the wobble math can still cover the remaining columns.
+
+New `scripts/generate_review_sequence.py`: exactly one
+`imagegen.generate(n=1, ...)` call per new pose (**2 calls total**, no
+retry, no fallback provider — same discipline as addendum #1), each
+grounded on **both** `assets/reference/jorgito_canonical.png` (identity
+lock) **and** the immediately-preceding pose's raw generated image
+(continuity of motion), via `generate()`'s documented
+`reference_images: list[Path]` support. Chained, not fixed: pose 3 grounds
+on canonical + pose 2's raw output (not pose 1's), so the progression reads
+as one continuous action rather than three independent riffs on the
+original pilot image. `scripts/prompts_single_pose.py`'s
+`build_single_pose_prompt()` gained one new optional parameter,
+`action_override`, so each pose in the sequence can describe its specific
+page-turn moment while still routing through the same identity/background/
+style template the pilot used — no duplicated prompt-building logic.
+
+### Step 3 — processing
+
+Both new raw images went through the same chroma-key + fit-to-cell
+primitives as the pilot (`atlas.remove_background` /
+`atlas._fit_to_cell`, `chroma_key=None` so `remove_background` auto-detects
+the actual backdrop rather than assuming pure magenta) →
+`assets/keyframes/processed/review_pose2_midturn.png` and
+`review_pose3_turned.png`, both 192x208 RGBA, clean single-subject output
+(no segmentation artifacts, confirming addendum #1's fix generalizes to new
+prompts).
+
+### Step 4 — building the real `review` row (6 frames, 3 real poses)
+
+New `scripts/build_review_row.py`. Since the row needs 6 frames and only 3
+real poses exist, they're distributed in a **ping-pong** order —
+`[pose1, pose2, pose3, pose3, pose2, pose1]` — a forward-then-back page-turn
+that shows the full progression twice (forward and reverse) across one loop
+and keeps the loop seam smooth (the row's last and first frames are both
+close to the "settled" pose rather than jump-cutting from fully-turned back
+to closed).
+
+Each of the 6 columns then gets the Phase 4 deterministic bob/tilt/scale
+wobble **on top of its real assigned pose** (not instead of it) — `_vary()`
+copied verbatim (unmodified) from `phase-4-full-atlas`'s
+`scripts/full_atlas.py` (that branch is never merged into this one, so it
+can't be imported directly; the cross-review fix from commit `7353a27` —
+decoupling bob/tilt/scale onto `sin`/`cos` respectively so mirrored columns
+don't collapse — is preserved exactly). This is what makes the two columns
+that share a base pose (pose 1 at columns 0 and 5, pose 3 at columns 2 and
+3) still hash-distinct instead of relying on pose variation alone for 4/6
+columns and identical pixels for the other 2.
+
+No new wobble math was needed — the row-count/assignment logic (`ROW_POSE_ORDER`
++ loading 3 poses instead of 1) is new, but `_vary()` itself is untouched,
+per the task's instruction to reuse the existing fix rather than touch the
+math.
+
+### Step 5 — validation
+
+Built a full-size (1536×1872) atlas image via Hermes's own
+`atlas.compose_atlas({"review": frames})` with **only** the `review` row
+filled — every other row's cells stay fully transparent, which is
+`compose_atlas`'s own documented behavior for missing states, not a
+workaround. Ran Hermes's real, unmodified `atlas.validate_atlas()` against
+it directly (turned out to be practical without the full 9-state atlas,
+since `validate_atlas()` only *warns* — doesn't error — on an unfilled state
+row):
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-right' has no frames",
+    "state 'running-left' has no frames", "state 'waving' has no frames",
+    "state 'jumping' has no frames", "state 'failed' has no frames",
+    "state 'waiting' has no frames", "state 'running' has no frames"
+  ],
+  "filled_states": ["review"]
+}
+```
+
+`ok: true`, zero errors — correct geometry, no multi-pose outliers, no
+collapsed-row detection, no transparency residue. The 8 warnings are
+expected and harmless (this run intentionally only fills `review`, per the
+task's "stop after review" scope).
+
+Frame-hash uniqueness (evidence requested as a fallback, but obtained
+alongside the real validator, not instead of it):
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 (book open, starting) | `fd6e4f6455889d04` |
+| 1 | pose 2 (mid-page-turn) | `e1479549f5bf67b3` |
+| 2 | pose 3 (page turned) | `ebd74364db9e3ff6` |
+| 3 | pose 3 (page turned) | `e91911268077781b` |
+| 4 | pose 2 (mid-page-turn) | `8bf546ebff5d0e11` |
+| 5 | pose 1 (book open, starting) | `3bc84d95348d49fe` |
+
+**6/6 unique** — including the two column-pairs sharing a base pose (0/5,
+2/3), which the wobble alone resolves.
+
+### Step 6 — visual gate evidence
+
+- `assets/keyframes/review_row_contact_sheet.png` — all 6 row frames,
+  labeled `col{i}: pose{N}`, in row order left→right. The page-turn
+  progression is visually legible across columns (hand/page position
+  changes), not a static image repeated with a wobble.
+- `assets/keyframes/review_row_preview.gif` — looping animated preview of
+  the same 6 frames (280ms/frame, upscaled 3x on a checker backdrop) so the
+  page-turning motion can be watched, not just compared frame-by-frame.
+- `assets/keyframes/review_row_atlas_fragment.png` — the full-size atlas
+  image used for `validate_atlas()`, review row only.
+- `assets/keyframes/review_row_report.json` — row order, all 6 hashes,
+  full `validate_atlas()` output, file paths.
+
+### Cost
+
+| | |
+|---|---|
+| Balance before (settled, = pilot's post-pilot balance) | $7.5734 |
+| Balance after (settled, ~75s post-run recheck — same `/credits` lag documented in addendum #1) | $7.2911 |
+| **Spent this addendum (2 new `generate()` calls)** | **$0.2823** (~$0.1411/call, consistent with the pilot's $0.1415/call) |
+
+Full before/after readings (immediate + settled) in
+`assets/keyframes/review_sequence_report.json`.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only
+  (`generate_review_sequence.py` carries the same refusal guard as
+  addendum #1/`hatch_pet_run.py`; `build_review_row.py` is pure image
+  processing, no `HERMES_HOME` needed at all).
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical to every prior check in this doc**,
+  confirmed again after this addendum's 2 API calls.
+- Real `~/.hermes/pets/`: empty before and after.
+
+### Decision
+
+**Addendum #2 done, `review` state only, awaiting human visual gate** on
+`assets/keyframes/review_row_contact_sheet.png` and
+`assets/keyframes/review_row_preview.gif`. Per the task's explicit scope,
+stopped after `review` — no other state was touched. If approved, the
+natural next step is generating 2-3 real poses per remaining state with
+this same pattern (not attempted here).
+
+### Files changed (addendum #2)
+
+- `scripts/prompts_single_pose.py` (modified — added optional
+  `action_override` param to `build_single_pose_prompt`).
+- `scripts/generate_review_sequence.py` (new).
+- `scripts/build_review_row.py` (new).
+- `assets/keyframes/raw_single_pose/review_pose2_midturn.png` (new).
+- `assets/keyframes/raw_single_pose/review_pose3_turned.png` (new).
+- `assets/keyframes/processed/review_pose2_midturn.png` (new).
+- `assets/keyframes/processed/review_pose3_turned.png` (new).
+- `assets/keyframes/review_sequence_report.json` (new).
+- `assets/keyframes/review_row_atlas_fragment.png` (new).
+- `assets/keyframes/review_row_contact_sheet.png` (new).
+- `assets/keyframes/review_row_preview.gif` (new).
+- `assets/keyframes/review_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).

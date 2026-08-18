@@ -68,7 +68,9 @@ def _style_hint(style: str | None) -> str:
     return _STYLE_HINTS.get((style or "auto").strip().lower(), _STYLE_HINTS["auto"])
 
 
-def build_single_pose_prompt(state: str, concept: str, style: str | None = "auto") -> str:
+def build_single_pose_prompt(
+    state: str, concept: str, style: str | None = "auto", action_override: str | None = None
+) -> str:
     """A single centered pose depicting *state*'s specific action.
 
     Grounded on the attached reference image (identity lock), no strip/gutter/
@@ -76,8 +78,15 @@ def build_single_pose_prompt(state: str, concept: str, style: str | None = "auto
     already does one image per call, so there is nothing here to slice or
     segment downstream. Mirrors ``build_row_prompt``'s identity/background/style
     framing for continuity with the existing pipeline's look.
+
+    *action_override* lets a caller describe a specific pose variant (e.g. one
+    step of a page-turn sequence) instead of the single fixed action in
+    ``_STATE_ACTIONS`` -- used by ``generate_review_sequence.py`` so each pose
+    in the sequence still routes through this one prompt template.
     """
-    action = _STATE_ACTIONS.get(state, f"Jorgito {state}, a clear single readable pose")
+    action = action_override or _STATE_ACTIONS.get(
+        state, f"Jorgito {state}, a clear single readable pose"
+    )
     concept = (concept or "the mascot").strip()
     return (
         f"Using the attached reference image as the exact same character "

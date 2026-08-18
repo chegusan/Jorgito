@@ -1,0 +1,60 @@
+{
+  "state": "review",
+  "provider": "openrouter",
+  "balance_before_run": {
+    "total_credits": 20,
+    "total_usage": 12.4266465,
+    "balance": 7.5733535
+  },
+  "poses": [
+    {
+      "name": "pose2_midturn",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/review.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito thinking/reading, mid-page-turn: sitting or standing with a small pair of reading glasses on, holding an open book up in front of them, one hand lifted up and away from the book with a page caught mid-flip curling up in the air between the fingers, head still tilted slightly down toward the book as if watching the page turn. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 23.1,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_131532_c95f5a93.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/review_pose2_midturn.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/review_pose2_midturn.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 12.4266465,
+        "balance": 7.5733535
+      }
+    },
+    {
+      "name": "pose3_turned",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/review_pose2_midturn.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito thinking/reading, having just turned to a new page: sitting or standing with a small pair of reading glasses on, holding an open book up in front of them, the turned page now lying flat and the hand resting back down on the book, head tilted slightly down continuing to study the new page intently. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 51.5,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_131624_51fe9d49.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/raw_single_pose/review_pose3_turned.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/review_pose3_turned.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 12.4266465,
+        "balance": 7.5733535
+      }
+    }
+  ],
+  "balance_after_run_immediate": {
+    "total_credits": 20,
+    "total_usage": 12.4266465,
+    "balance": 7.5733535
+  },
+  "spent_usd_immediate": 0.0,
+  "balance_after_run_settled": {
+    "total_credits": 20,
+    "total_usage": 12.7089045,
+    "balance": 7.2910955
+  },
+  "spent_usd_settled": 0.2823,
+  "settled_note": "Same OpenRouter /credits accounting lag documented in single_pose_pilot_report.json -- the immediate post-call reading still showed the pre-run usage total; re-checked ~75s after the run finished once total_usage had moved. $0.2823 for 2 new generate() calls (~$0.1411/call), consistent with the pilot's $0.1415 single-call cost."
+}
