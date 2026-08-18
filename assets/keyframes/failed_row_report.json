@@ -12,15 +12,15 @@
     1
   ],
   "pose_files": [
-    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose1.png",
-    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose2.png",
-    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/failed_pose3.png"
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-fix-failed-chromakey/assets/keyframes/processed/failed_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-fix-failed-chromakey/assets/keyframes/processed/failed_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-fix-failed-chromakey/assets/keyframes/processed/failed_pose3.png"
   ],
   "frame_hashes": [
     "88756f92b416e19a",
     "b019552be7f98fbc",
-    "6c6c37c0e1c66b9d",
-    "284b69c91ad99f01",
+    "fbef9264dc07852a",
+    "6a6e4cbb1aadaf0d",
     "73c34bd407d5cd57",
     "98f7e9f91fcbb9d4",
     "616b2918b58514b0",
@@ -46,7 +46,7 @@
       "failed"
     ]
   },
-  "atlas_fragment_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/failed_row_atlas_fragment.png",
-  "contact_sheet_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/failed_row_contact_sheet.png",
-  "gif_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/failed_row_preview.gif"
+  "atlas_fragment_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-fix-failed-chromakey/assets/keyframes/failed_row_atlas_fragment.png",
+  "contact_sheet_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-fix-failed-chromakey/assets/keyframes/failed_row_contact_sheet.png",
+  "gif_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-fix-failed-chromakey/assets/keyframes/failed_row_preview.gif"
 }

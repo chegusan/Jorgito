@@ -918,3 +918,174 @@ runner script.
 - `assets/keyframes/failed_row_report.json` (new).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).
+
+---
+
+## Addendum #5 — `failed` row chroma-key fix (pose 3 shadow patch)
+
+**Status: DONE, `failed` state only, PASS.** Branch
+`phase2b-fix-failed-chromakey` (base `phase2b-hatch-pet-regen`). Fixes the
+one processing defect addendum #4 flagged: pose 3's un-keyed drop-shadow,
+visible as a small green patch under the feet in row columns 2 and 3.
+**Zero API/generation calls** — purely a deterministic reprocessing of the
+already-committed raw pose-3 image
+(`assets/keyframes/raw_single_pose/failed_pose3.png`).
+
+### Root cause
+
+`atlas.remove_background(chroma_key=None, threshold=90.0)` auto-detects the
+backdrop key from the corner color, then keys out matching pixels. For a
+strongly saturated key (this pose's auto-detected key was `(2, 253, 5)`,
+`max-min = 251 >= 120`), `remove_background` takes its **fast path**: a
+global near-key color match with no connectivity requirement (unlike the
+border-flood-fill it uses for desaturated keys). Pose 3's raw generation
+included a soft drop-shadow ellipse blended toward — but not fully matching
+— the flat backdrop color; its pixels measured ~56–110 color-distance from
+the key (sampled directly from the processed cell), just outside the 90
+threshold, so the fast path left them opaque.
+
+Simply widening `remove_background`'s own `threshold` was ruled out:
+because the fast path has no connectivity gate, a wider threshold would
+also remove any interior pixel that happens to be close to green — and
+this character has **green eyes** (an eye-region pixel measured ~100–110
+distance from the same key, right in the shadow's range). Widening the
+global threshold enough to clear the shadow risked punching a hole in the
+eyes. `remove_background` itself lives in
+`/home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py` — the
+real, non-isolated `~/.hermes` tree this project's guardrails say never to
+edit — so the fix could not live there even if it had been the right shape.
+
+### Fix
+
+Added a second, **connectivity-gated** pass in `scripts/pose_sequence.py`
+(shared logic, not a `failed`-only hack):
+
+- `_flood_extend_transparency(rgba, key, threshold)` — reuses
+  `atlas.remove_background`'s own border-flood-fill *shape* (BFS over
+  4-connected near-key pixels), but seeds the flood from the pixels
+  `remove_background` already made transparent (not just the image border),
+  with a looser threshold (`DESPILL_THRESHOLD = 170.0`, comfortably above
+  the shadow's measured ~110 max and comfortably below the nearest real
+  character color at ~218). Because removal requires connectivity to
+  already-removed background, an isolated key-ish interior pixel (the eyes)
+  stays untouched regardless of threshold — it's never reachable without
+  crossing genuinely non-key-colored face pixels.
+- `_remove_background_despilled(rgba, chroma_key, threshold)` — wraps
+  `atlas.remove_background` + the extension pass. Both
+  `generate_pose_sequence` (fresh generation) and the new `reprocess_pose`
+  (after-the-fact fix, no generation) call this shared function, so every
+  future state's pipeline gets the despill pass automatically, and a
+  processing-only defect never again needs a `hatch_pet()`/`generate()`
+  re-spend to fix.
+- `reprocess_pose(state, name, raw_path=None)` — re-runs chroma-key +
+  fit-to-cell against an already-committed raw pose, no network, no
+  `HERMES_HOME`. New thin runner `scripts/fix_failed_pose3_chromakey.py`
+  calls `reprocess_pose("failed", "pose3")` then rebuilds the row via the
+  existing `build_failed_row.main()`.
+
+Poses 1/2 were not reprocessed — addendum #4 already confirmed they have no
+shadow and keyed out cleanly; their processed cells are untouched
+(`git diff --stat` on `failed_pose1.png`/`failed_pose2.png`: empty).
+
+### Verification
+
+**Pixel-level, before/after:** greenish opaque pixels (`r<60, b<60,
+g>120`) in the processed `failed_pose3.png` cell: **1474 → 1**. Visual
+crop, zoomed on the feet, sent to the user
+(`assets/keyframes/failed_pose3_chromakey_fix_before_after.png`) —
+green patch fully gone, claws/feet detail unaffected, eyes intact (not
+eaten by the widened tolerance, confirming the connectivity gate worked as
+designed).
+
+**`validate_atlas()`, real Hermes, re-run on the rebuilt `failed` row:**
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-right' has no frames",
+    "state 'running-left' has no frames", "state 'waving' has no frames",
+    "state 'jumping' has no frames", "state 'waiting' has no frames",
+    "state 'running' has no frames", "state 'review' has no frames"
+  ],
+  "filled_states": ["failed"]
+}
+```
+
+Frame hashes, before → after (columns 2/3 are the only ones that changed —
+exactly the two columns using pose 3; all other columns byte-identical to
+addendum #4):
+
+| col | pose | before (addendum #4) | after (this fix) |
+|---|---|---|---|
+| 0 | pose1 | `88756f92b416e19a` | `88756f92b416e19a` (unchanged) |
+| 1 | pose2 | `b019552be7f98fbc` | `b019552be7f98fbc` (unchanged) |
+| 2 | pose3 | `6c6c37c0e1c66b9d` | `fbef9264dc07852a` (changed — patch removed) |
+| 3 | pose3 | `284b69c91ad99f01` | `6a6e4cbb1aadaf0d` (changed — patch removed) |
+| 4 | pose2 | `73c34bd407d5cd57` | `73c34bd407d5cd57` (unchanged) |
+| 5 | pose1 | `98f7e9f91fcbb9d4` | `98f7e9f91fcbb9d4` (unchanged) |
+| 6 | pose1 | `616b2918b58514b0` | `616b2918b58514b0` (unchanged) |
+| 7 | pose2 | `d75da4c563831207` | `d75da4c563831207` (unchanged) |
+
+**8/8 unique**, `validate_atlas() ok: true` — pose-variation fix from
+addendum #4 not regressed.
+
+**Surgical-fix confirmation — every other row/state untouched:** `sha256sum`
+over every file under `assets/keyframes/` *except* `failed`-prefixed ones
+(idle/review/waiting rows' PNGs/GIFs/JSONs, atlas fragments, contact
+sheets, reference assets), recorded before this fix and re-checked after:
+**all byte-identical**. `git status --porcelain` after the fix shows only
+`failed`-scoped assets plus `scripts/pose_sequence.py` (the shared code)
+and the new `scripts/fix_failed_pose3_chromakey.py` runner — nothing else.
+
+**Zero API/generation calls, zero spend:** `scripts/fix_failed_pose3_chromakey.py`
+never imports `imagegen`, never sets `HERMES_HOME`, never touches the
+network — pure Pillow reprocessing of an already-committed raw file.
+
+**Real `~/.hermes` untouched:** `~/.hermes/config.yaml` md5
+`66684dd3b378e4584ab08ab097024ed4`, mtime `1786786713` — identical to every
+prior check in this document. `find ~/.hermes -maxdepth 2` listing
+diffed before/after this fix: no changes. `~/.hermes/pets/`: empty before
+and after (isolated profile was never even activated — this fix never
+calls `_activate_isolated_home()`).
+
+### Cost
+
+$0.00 — no `generate()` calls, no `HERMES_HOME` activation.
+
+### Files changed (addendum #5)
+
+- `scripts/pose_sequence.py` (modified — added
+  `_flood_extend_transparency`, `DESPILL_THRESHOLD`,
+  `_remove_background_despilled`, `reprocess_pose`; inline processing call
+  in `generate_pose_sequence` switched to the despilled wrapper).
+- `scripts/fix_failed_pose3_chromakey.py` (new — thin one-off runner).
+- `assets/keyframes/processed/failed_pose3.png` (reprocessed).
+- `assets/keyframes/failed_row_atlas_fragment.png` (rebuilt).
+- `assets/keyframes/failed_row_contact_sheet.png` (rebuilt).
+- `assets/keyframes/failed_row_preview.gif` (rebuilt).
+- `assets/keyframes/failed_row_report.json` (rebuilt).
+- `assets/keyframes/failed_pose3_chromakey_fix_before_after.png` (new —
+  before/after evidence crop, sent to the user).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).
+
+### Decision
+
+**PASS.** The `failed` row's only outstanding visual-gate caveat (pose 3's
+shadow patch) is resolved with real pixel-level and `validate_atlas()`
+evidence, at zero cost, with every other row proven byte-identical. Ready
+for the human's final visual-gate sign-off on `failed` alongside `waiting`
+(still pending from addendum #3/#4, unaffected by this fix). PR opened
+against `phase2b-hatch-pet-regen`.
+
+### Next phase/task
+
+None dispatched automatically. Once `waiting` and `failed` both clear the
+human visual gate, the natural next step is applying the same
+`pose_sequence.py` + `state_row.py` pattern (now despill-protected by
+default) to the remaining 3 states (`jumping`, `waving`, `running`) — not
+started here, out of this fix's scope.

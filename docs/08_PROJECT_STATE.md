@@ -89,21 +89,35 @@ keyframes.
   gate:** pose 3's raw generation includes a soft drop-shadow that didn't
   fully chroma-key out — a small green patch is visible under the feet in
   columns 2 and 3 (the two columns using pose 3). Not retried (one call per
-  pose, no retry/fallback, per guardrails).
+  pose, no retry/fallback, per guardrails). **Resolved by addendum #5** (see
+  below) — no longer an open caveat.
+- Phase 2B addendum #5 — **`failed` row chroma-key fix, DONE, PASS.** Fixed
+  addendum #4's shadow-patch caveat with a deterministic reprocessing pass
+  (`scripts/pose_sequence.py`'s new `_flood_extend_transparency` /
+  `_remove_background_despilled`, shared by all states going forward), zero
+  API calls, zero cost. Green patch pixel count in `failed_pose3.png`: 1474
+  → 1. `validate_atlas()` `ok: true`, 8/8 unique hashes (only columns 2/3
+  changed, matching pose 3's columns exactly). Every other row's assets
+  confirmed byte-identical via `sha256sum`. Real `~/.hermes` confirmed
+  untouched. Before/after crop sent to the user
+  (`assets/keyframes/failed_pose3_chromakey_fix_before_after.png`). Branch
+  `phase2b-fix-failed-chromakey`, PR opened against
+  `phase2b-hatch-pet-regen`. See the addendum in
+  `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
 
 ## Active objective
 
 Waiting on the user's visual-gate judgment on addendum #3's `waiting` row
-AND addendum #4's `failed` row
+AND addendum #4/#5's `failed` row
 (`assets/keyframes/{waiting,failed}_row_contact_sheet.png` /
 `{waiting,failed}_row_preview.gif`) before running the remaining 3 states
-(`jumping`, `waving`, `running`) with this same pattern. If `failed` is
-rejected on the shadow-patch caveat, options are: retry pose 3 only with a
-prompt that more strongly forbids any ground shadow, or accept the patch as
-a minor artifact. If rejected outright, or as a broader decision, fall back
-to Phase 2B's original 4 options (retry same model, try a different
-`OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
-final, or tighten the row-strip prompt) — see
+(`jumping`, `waving`, `running`) with this same pattern. `failed`'s
+shadow-patch caveat is resolved (addendum #5, zero-cost deterministic
+reprocessing) — the row's only remaining question for the human gate is
+pose-quality/identity, same as every other row. If rejected outright, or as
+a broader decision, fall back to Phase 2B's original 4 options (retry same
+model, try a different `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep
+Phase 3/4's Camino B as final, or tighten the row-strip prompt) — see
 `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not proceeding to the
 remaining 3 states automatically given real per-call cost.
 

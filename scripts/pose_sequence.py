@@ -25,6 +25,7 @@ refusal guard as the rest of this project's Phase 2B scripts).
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
 import sys
@@ -84,6 +85,123 @@ def _activate_isolated_home() -> None:
     if Path(os.environ.get("HERMES_HOME", "")).resolve() == Path(REAL_HOME).resolve():
         print("ERROR: HERMES_HOME resolved to the real profile -- refusing.", file=sys.stderr)
         sys.exit(1)
+
+
+def _flood_extend_transparency(rgba, key: tuple[int, int, int], threshold: float):
+    """Grow the transparent region left by ``atlas.remove_background`` into
+    connected soft-shadow/despill residue that didn't pass its stricter
+    first-pass key match.
+
+    A soft drop-shadow (blended toward the backdrop color rather than flat)
+    can sit just outside ``remove_background``'s threshold, leaving a small
+    patch of near-key color behind wherever it touches the ground/backdrop.
+    Widening ``remove_background``'s own threshold isn't safe for a strongly
+    saturated key (its fast path removes any matching pixel globally, no
+    connectivity check -- see its docstring on why that punched holes in
+    interior highlights before the border-flood approach existed) -- e.g. a
+    green key would risk eating this character's green eyes.
+
+    This second pass reuses the same border-flood-fill *shape* as
+    ``atlas.remove_background`` (BFS over 4-connected near-key pixels), but
+    seeded from the pixels ``remove_background`` already made transparent,
+    not just the image border, and gated purely by connectivity: a pixel is
+    only removed if reachable from already-removed background without
+    crossing a pixel outside *threshold*. An isolated key-ish interior pixel
+    (like an eye) stays untouched because it's surrounded by genuinely
+    non-key-colored pixels, not because of a tighter color threshold.
+    """
+    from collections import deque
+
+    from PIL import Image
+
+    rgba = rgba.convert("RGBA")
+    w, h = rgba.size
+    px = rgba.load()
+
+    def _is_bg(x: int, y: int) -> bool:
+        r, g, b, a = px[x, y]
+        if a <= 16:
+            return False
+        return math.sqrt((r - key[0]) ** 2 + (g - key[1]) ** 2 + (b - key[2]) ** 2) <= threshold
+
+    visited = bytearray(w * h)
+    remove = bytearray(w * h)
+    queue: deque[tuple[int, int]] = deque()
+
+    for y in range(h):
+        for x in range(w):
+            if px[x, y][3] <= 16:
+                idx = y * w + x
+                visited[idx] = 1
+                queue.append((x, y))
+
+    while queue:
+        x, y = queue.popleft()
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < w and 0 <= ny < h:
+                idx = ny * w + nx
+                if not visited[idx]:
+                    visited[idx] = 1
+                    if _is_bg(nx, ny):
+                        remove[idx] = 1
+                        queue.append((nx, ny))
+
+    if not any(remove):
+        return rgba
+
+    mask = Image.frombytes("L", (w, h), bytes(remove)).point(lambda v: 255 if v else 0)
+    return Image.composite(Image.new("RGBA", rgba.size, (0, 0, 0, 0)), rgba, mask)
+
+
+# Loose second-pass threshold for `_flood_extend_transparency`. Measured
+# against `failed` pose 3's shadow patch: shadow-tinted pixels top out
+# ~110 color-distance from the auto-detected key, with a wide gap before the
+# nearest real character color (~218, red/yellow scale tones) -- see
+# docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md's chroma-key fix addendum.
+# Kept below that gap with margin. Safe to leave generous because the pass
+# is connectivity-gated, not a global color match.
+DESPILL_THRESHOLD = 170.0
+
+
+def _remove_background_despilled(rgba, chroma_key: tuple[int, int, int] | None, threshold: float):
+    """``atlas.remove_background`` plus the shadow-despill extension above.
+
+    Shared by both fresh generation (`generate_pose_sequence`) and
+    after-the-fact reprocessing of an already-generated raw pose
+    (`reprocess_pose`), so a processing-only fix never needs a new
+    `imagegen.generate()` call.
+    """
+    from agent.pet.generate import atlas
+
+    keyed = atlas.remove_background(rgba, chroma_key=chroma_key, threshold=threshold)
+    key = chroma_key or atlas._dominant_corner_color(rgba.convert("RGBA"))  # noqa: SLF001
+    return _flood_extend_transparency(keyed, key, DESPILL_THRESHOLD)
+
+
+def reprocess_pose(state: str, name: str, raw_path: Path | None = None) -> Path:
+    """Re-run chroma-key + fit-to-cell for an already-generated pose, no network.
+
+    For fixing a processing defect (e.g. an unkeyed shadow) discovered after
+    the fact, without spending on a new `generate()` call. Reads
+    ``assets/keyframes/raw_single_pose/{state}_{name}.png`` (or *raw_path*),
+    reprocesses through the exact same pipeline `generate_pose_sequence` uses
+    inline, and overwrites ``assets/keyframes/processed/{state}_{name}.png``.
+    Pure Pillow -- no network, no `HERMES_HOME`.
+    """
+    from agent.pet.generate import atlas
+    from PIL import Image
+
+    raw_path = raw_path or (RAW_OUT_DIR / f"{state}_{name}.png")
+    with Image.open(raw_path) as src:
+        rgba = src.convert("RGBA")
+        keyed = _remove_background_despilled(rgba, chroma_key=None, threshold=90.0)
+        cell = atlas._fit_to_cell(keyed)  # noqa: SLF001 - reusing project's own fit logic
+
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = PROCESSED_DIR / f"{state}_{name}.png"
+    cell.save(out_path)
+    print(f"reprocessed -> {out_path} ({cell.size[0]}x{cell.size[1]}, {cell.mode})")
+    return out_path
 
 
 def generate_pose_sequence(state: str, action_descriptions: list[str], n_poses: int) -> dict:
@@ -173,7 +291,7 @@ def generate_pose_sequence(state: str, action_descriptions: list[str], n_poses: 
 
                 with Image.open(raw_copy) as src:
                     rgba = src.convert("RGBA")
-                    keyed = atlas.remove_background(rgba, chroma_key=None, threshold=90.0)
+                    keyed = _remove_background_despilled(rgba, chroma_key=None, threshold=90.0)
                     cell = atlas._fit_to_cell(keyed)  # noqa: SLF001 - reusing project's own fit logic
                 processed_path = PROCESSED_DIR / f"{state}_{name}.png"
                 cell.save(processed_path)
