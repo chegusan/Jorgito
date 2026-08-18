@@ -31,14 +31,26 @@ keyframes.
   Real `~/.hermes` verified untouched before/after. See
   `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` for the full per-state
   breakdown and the 4 options put to the user.
+- Phase 2B addendum — **single-pose pilot, `review` state only, DONE,
+  awaiting human visual gate.** Instead of a multi-pose row strip per state,
+  generate ONE centered pose per API call
+  (`imagegen.generate(n=1, ...)`, already single-image-per-call). Piloted on
+  `review` (one of Phase 2B's 4 failed states) to test whether this sidesteps
+  the segmentation problem. Result: clean single-subject output, no
+  segmentation artifacts, **$0.1415** (vs. ~$2.40 for the row-strip run).
+  Preview for the visual gate: `assets/keyframes/pilot_review_single_pose_preview.png`.
+  See the addendum in `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
 
 ## Active objective
 
-Waiting on the user to pick one of Phase 2B's 4 options (retry same model,
-try a different `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's
-Camino B as final, or tighten the row-strip prompt for one more attempt) —
-see `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not retrying
-automatically given the real per-attempt cost (~$2.40 this run).
+Waiting on the user's visual-gate judgment on the single-pose pilot preview
+(`assets/keyframes/pilot_review_single_pose_preview.png`) before running the
+remaining 7 states with this approach. If rejected, fall back to Phase 2B's
+original 4 options (retry same model, try a different
+`OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
+final, or tighten the row-strip prompt) — see
+`docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not proceeding to the
+other 7 states automatically given real per-call cost.
 
 ## Confirmed decisions
 

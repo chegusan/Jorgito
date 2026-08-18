@@ -171,3 +171,128 @@ each attempt:
 None dispatched automatically — this phase surfaces the result and cost for
 the user to decide among the options above. No visual gate to run (nothing
 was produced to gate).
+
+---
+
+## Addendum — single-pose pilot (`review` state only)
+
+**Status: PILOT DONE, awaiting human visual gate.** Not a retry of option
+1/2/4 above — a different mechanism entirely, generating ONE centered pose
+per API call instead of a multi-pose row strip, to test whether that
+sidesteps the segmentation failures this phase hit (`review` was one of the
+4 states that failed all 3 row-strip attempts: "frame 3 contains multiple
+separated subjects").
+
+### Why this is possible without more `hatch_pet()` spend
+
+`imagegen.generate(prompt, n=1, reference_images=[...], provider=...)`
+(`agent/pet/generate/imagegen.py`) already does single-image-per-call
+generation — no strip, no slicing — it's the same primitive
+`generate_base_drafts()` uses in production. `hatch_pet()`'s row-strip
+failure is specific to `build_row_prompt()`'s multi-pose-per-call approach,
+not to the underlying generation call.
+
+### What was built
+
+- **`scripts/prompts_single_pose.py`** (new) — `build_single_pose_prompt(state,
+  concept, style)`. Based directly on Hermes's own
+  `agent.pet.generate.prompts.build_row_prompt()` (same identity-grounding
+  and chroma-key background framing), with all strip/gutter/spacing/
+  multi-frame language removed and a `review`-specific action from this
+  project's `docs/09_DECISIONS.md` D-004 ("Jorgito thinking/reading:
+  glasses + open book").
+  **Deviation from the task as given:** this function was NOT added in place
+  to `agent/pet/generate/prompts.py`. That path resolves to
+  `/home/chegusan/.hermes/hermes-agent/agent/pet/generate/prompts.py` —
+  which is both this task's declared read-only Hermes reference tree *and*
+  physically inside the real `~/.hermes/` this project's guardrails say never
+  to touch. Editing it in place would violate that guardrail, so the new
+  function lives in the Jorgito repo instead, at
+  `scripts/prompts_single_pose.py`, and is imported by the pilot script.
+  `agent/pet/generate/prompts.py` itself was not modified — confirmed by the
+  real-`~/.hermes` md5/mtime check below.
+- **`scripts/generate_single_pose.py`** (new) — isolated-profile-only
+  (same refusal guard as `scripts/hatch_pet_run.py`), checks OpenRouter
+  balance, resolves the OpenRouter provider, builds the prompt above for
+  `state="review"`, and makes **exactly one** `imagegen.generate(n=1, ...)`
+  call — no retry loop, no provider fallback. Feeds the resulting raw image
+  through the same chroma-key + fit-to-cell primitives
+  `scripts/keyframe_processing.py` wraps (`atlas.remove_background` /
+  `atlas._fit_to_cell`, called directly since the generated file isn't in
+  `keyframe_processing.py`'s `raw_dir/{state}.jpeg` layout) to produce a
+  normalized 192x208 cell.
+- **Branch note:** `scripts/keyframe_processing.py` and
+  `assets/keyframes/processed/review.png` (the approved Phase 1 keyframe,
+  needed for the side-by-side gate) did not exist on this branch —
+  `phase2b-hatch-pet-regen` branches from `master`, and Phase 1/3/4 landed on
+  separate never-merged branches (`phase-1-minimal-visual-proof`,
+  `phase-3-comfyui-keyframes`, `phase-4-full-atlas`). Both files were pulled
+  in unmodified from `phase-4-full-atlas` (`git show
+  phase-4-full-atlas:<path>`) rather than reimplemented.
+
+### Result
+
+One API call, `state="review"`. Output:
+`assets/keyframes/raw_single_pose/review.png` (raw, 1024x1024) →
+`assets/keyframes/processed/review_singlepose_pilot.png` (processed,
+192x208 RGBA). Chroma-keyed cleanly, single subject, no segmentation
+artifacts — the exact failure mode this pilot targets did not reproduce.
+Side-by-side preview for the visual gate:
+`assets/keyframes/pilot_review_single_pose_preview.png` (old Phase 1
+`review.png` vs. new single-pose pilot, both labeled).
+
+### Cost
+
+| | |
+|---|---|
+| Balance before | $7.7148 |
+| Balance after (settled) | $7.5734 |
+| **Spent this pilot** | **$0.1415** |
+| Wall-clock | 24.4s |
+
+(OpenRouter's `/credits` usage figure lags the actual charge by roughly a
+minute — an immediate post-call check still showed the pre-call total; the
+figure above is from a re-check once `total_usage` had moved. Both readings
+are in `assets/keyframes/single_pose_pilot_report.json`.) Two orders of
+magnitude cheaper than the $2.40 row-strip run, consistent with generating
+one pose instead of an up-to-8-pose strip per call.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only.
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical before and after** this pilot (same
+  values as Phase 2B's original run above).
+- Real `~/.hermes/pets/`: empty before and after.
+- Isolated profile's `pets/`: unchanged (`boba`, `jorgito`, `jorgito-test`)
+  — this pilot called `imagegen.generate()` directly, not `hatch_pet()`, so
+  no pet install/registration was attempted or expected.
+
+### Decision
+
+**PILOT ONLY — stopped after `review` as instructed.** Awaiting the user's
+visual-gate judgment on
+`assets/keyframes/pilot_review_single_pose_preview.png` before running the
+remaining 7 states with this approach. If approved, the natural next step is
+the same single-pose call for each remaining state, followed by
+`atlas.compose_atlas()` to assemble the 9-row sheet (not attempted here —
+out of scope for this single-state pilot).
+
+### Files changed (this addendum)
+
+- `scripts/prompts_single_pose.py` (new).
+- `scripts/generate_single_pose.py` (new).
+- `scripts/keyframe_processing.py` (pulled in from `phase-4-full-atlas`,
+  unmodified — this branch didn't have it).
+- `assets/keyframes/processed/review.png` (pulled in from
+  `phase-4-full-atlas`, unmodified — the approved Phase 1 keyframe, needed
+  for the side-by-side gate).
+- `assets/keyframes/raw_single_pose/review.png` (new — raw generated image).
+- `assets/keyframes/processed/review_singlepose_pilot.png` (new — processed
+  cell).
+- `assets/keyframes/pilot_review_single_pose_preview.png` (new — the
+  side-by-side gate image).
+- `assets/keyframes/single_pose_pilot_report.json` (new — balances, prompt,
+  paths).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).
