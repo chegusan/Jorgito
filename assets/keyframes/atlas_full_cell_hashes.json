@@ -1,0 +1,113 @@
+{
+  "idle": {
+    "count": 6,
+    "unique_hashes": 3,
+    "hashes": [
+      "ebf1855e47aa",
+      "3d5968276a69",
+      "3d5968276a69",
+      "ebf1855e47aa",
+      "d13b64b31fbe",
+      "d13b64b31fbe"
+    ]
+  },
+  "running-right": {
+    "count": 8,
+    "unique_hashes": 5,
+    "hashes": [
+      "00a3a877b616",
+      "b30588b1ce6e",
+      "42e2c8448cfd",
+      "b30588b1ce6e",
+      "00a3a877b616",
+      "bcf70b3bec77",
+      "9097840dd22c",
+      "bcf70b3bec77"
+    ]
+  },
+  "running-left": {
+    "count": 8,
+    "unique_hashes": 5,
+    "hashes": [
+      "ecd107afaad8",
+      "25e087f4ccd9",
+      "86a75dc1d2af",
+      "25e087f4ccd9",
+      "ecd107afaad8",
+      "30e1aa144924",
+      "4f9233ce3be9",
+      "30e1aa144924"
+    ]
+  },
+  "waving": {
+    "count": 4,
+    "unique_hashes": 3,
+    "hashes": [
+      "0561c8899a2b",
+      "2d4c8b550a37",
+      "0561c8899a2b",
+      "d64578e26447"
+    ]
+  },
+  "jumping": {
+    "count": 5,
+    "unique_hashes": 5,
+    "hashes": [
+      "c563633a9813",
+      "3eee654113bb",
+      "ed13e6ddae4d",
+      "b0a03a20f29f",
+      "4c70f748f092"
+    ]
+  },
+  "failed": {
+    "count": 8,
+    "unique_hashes": 5,
+    "hashes": [
+      "0e08b4b7118e",
+      "8355c5527cd7",
+      "df2172da98ba",
+      "8355c5527cd7",
+      "0e08b4b7118e",
+      "6524e1a65c27",
+      "99d10b6ada55",
+      "6524e1a65c27"
+    ]
+  },
+  "waiting": {
+    "count": 6,
+    "unique_hashes": 3,
+    "hashes": [
+      "61d0cefbb312",
+      "4c85e85e6db0",
+      "4c85e85e6db0",
+      "61d0cefbb312",
+      "3974f1236e09",
+      "3974f1236e09"
+    ]
+  },
+  "running": {
+    "count": 6,
+    "unique_hashes": 3,
+    "hashes": [
+      "88b865b6dc60",
+      "c5175d24d4f4",
+      "c5175d24d4f4",
+      "88b865b6dc60",
+      "5088994a3a9a",
+      "5088994a3a9a"
+    ]
+  },
+  "review": {
+    "count": 6,
+    "unique_hashes": 3,
+    "hashes": [
+      "11b940374ffd",
+      "a6768323f5f7",
+      "a6768323f5f7",
+      "11b940374ffd",
+      "32cf8d80d076",
+      "32cf8d80d076"
+    ]
+  }
+}

@@ -7,14 +7,19 @@ and per-state frame counts, and ``mirror_frames`` is Hermes's own documented
 mechanism for deriving ``running-left`` from ``running-right`` (atlas.py's own
 docstring: "Used to derive running-left from an approved running-right row").
 
-This project has one static pose per state (no animation), so each state's
-single processed 192x208 cell is repeated across that row's real frame count
-(per ``ROW_SPECS``) -- same "steady repeat plays back as held still" approach
-``scripts/build_phase1_test_pet.py`` used for a 3-state subset in Phase 1.
+This project has one static pose per state (no keyframed animation), so each
+state's single processed 192x208 cell is turned into that row's real frame
+count (per ``ROW_SPECS``) via ``_vary()``: a deterministic sine-driven bob +
+tilt + breathing-scale applied to a copy of the base cell per column. Naively
+repeating the *same* image reference/pixels across a row (an earlier version
+of this module did exactly that) produces a row where every cell hashes
+identically -- Hermes's renderer then has nothing to animate and the state
+looks frozen even though ``validate_atlas()`` reports it as fully filled.
 """
 
 from __future__ import annotations
 
+import math
 import sys
 from pathlib import Path
 
@@ -61,8 +66,48 @@ def derive_running_left() -> Image.Image:
     return mirrored[0]
 
 
+# Amplitude of the deterministic per-column variation. Small on purpose: this
+# is a subtle idle-style bob/breathe, not a new hand-drawn animation.
+_BOB_PX = 3
+_TILT_DEG = 1.5
+_SCALE_DELTA = 0.02
+
+
+def _vary(cell: Image.Image, i: int, n: int) -> Image.Image:
+    """Return a distinct copy of *cell* for column *i* of *n*.
+
+    Column 0 stays byte-identical to the base keyframe -- it's the approved
+    reference pose. Every other column gets the same deterministic sine-phase
+    nudge (vertical bob, slight tilt, slight scale) so a row plays back as a
+    gentle breathing/bobbing loop instead of a frozen repeat. Uses NEAREST
+    resampling throughout to match ``atlas._fit_to_cell``'s pixel-art-safe
+    resample choice -- LANCZOS/BILINEAR would blur the hard pixel-art edges.
+    """
+    if i == 0 or n <= 1:
+        return cell.copy()
+
+    phase = 2 * math.pi * i / n
+    dy = round(_BOB_PX * math.sin(phase))
+    angle = _TILT_DEG * math.sin(phase)
+    scale = 1.0 + _SCALE_DELTA * math.sin(phase)
+
+    w, h = cell.size
+    rotated = cell.rotate(angle, resample=Image.Resampling.NEAREST, fillcolor=(0, 0, 0, 0))
+    sw, sh = max(1, round(w * scale)), max(1, round(h * scale))
+    scaled = rotated.resize((sw, sh), Image.Resampling.NEAREST) if (sw, sh) != (w, h) else rotated
+
+    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    out.alpha_composite(scaled, ((w - sw) // 2, (h - sh) // 2 + dy))
+    return out
+
+
 def build_frames_by_state() -> dict[str, list[Image.Image]]:
-    """One state's single pose repeated across that row's real frame count."""
+    """Each state's base pose expanded into that row's real frame count.
+
+    Column 0 is the untouched, approved keyframe; columns 1..n-1 are
+    deterministic variations (``_vary``) of a *copy* of it -- never the same
+    object/pixels repeated, so the row actually animates on playback.
+    """
     row_counts = {state: count for state, _row, count in atlas.ROW_SPECS}
 
     cells_by_row: dict[str, Image.Image] = {
@@ -70,7 +115,10 @@ def build_frames_by_state() -> dict[str, list[Image.Image]]:
     }
     cells_by_row["running-left"] = derive_running_left()
 
-    return {row: [cell] * row_counts[row] for row, cell in cells_by_row.items()}
+    return {
+        row: [_vary(cell, i, row_counts[row]) for i in range(row_counts[row])]
+        for row, cell in cells_by_row.items()
+    }
 
 
 def build_atlas_image() -> Image.Image:

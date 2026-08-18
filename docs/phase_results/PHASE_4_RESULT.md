@@ -386,6 +386,147 @@ real (no una decisión unilateral de este agente):
 > avanzar a la Fase 5 (instalación en el perfil real `~/.hermes`, que se
 > despacha por separado)?
 
+## Correction (post-merge-review): rows were not actually animated
+
+A later hash-level review of the installed `spritesheet.webp` found that
+`build_frames_by_state()` (the code documented in §1 above) built each row as
+`[cell] * row_counts[row]` — Python list-repetition of the **same** `Image`
+object/pixels, not distinct copies. SHA-256 over every cell in the installed
+atlas confirmed it: **each of the 9 rows had exactly 1 unique hash across all
+its columns.** The atlas passed `validate_atlas()` (geometry/occupancy/
+residue checks, which don't compare cell content across columns) and looked
+correct in the static contact sheet (§3), but on a real Hermes render every
+state was a frozen single pose — nothing animated, contrary to the phase's
+own framing of "steady repeat plays back as held still."
+
+### What changed
+
+`scripts/full_atlas.py` (now 131 lines, still comfortably inside AGENTS.md's
+100–300 line module budget):
+
+- Added `_vary(cell, i, n) -> Image.Image`: for column `i` of `n`, returns a
+  **copy** of `cell` (never the same object) with a deterministic
+  sine-phase nudge — vertical bob (±3px), tilt (±1.5°), and breathing scale
+  (±2%) — so a row plays back as a subtle bob/breathe loop instead of a
+  frozen repeat. Column `i=0` is returned untouched (`cell.copy()`, no
+  transform) so the approved reference keyframe pose is preserved exactly.
+  Uses `Image.Resampling.NEAREST` for both the rotation and the resize step,
+  matching `atlas._fit_to_cell`'s own resample choice (documented there as
+  the pixel-art-safe one — LANCZOS/BILINEAR would blur the hard sprite
+  edges).
+- `build_frames_by_state()` now calls `_vary(cell, i, row_counts[row])` per
+  column instead of `[cell] * row_counts[row]`. `running-left` is unaffected
+  by this call site — it still derives from `mirror_frames()` on the base
+  `running-right` cell (§0, untouched) — and gets its own `_vary` pass with
+  the same `n`/phase function as `running-right`, so both directional rows
+  bob in the same rhythm.
+- Zero new images generated, zero API/model calls (`AGENTS.md`'s cost
+  discipline: "transform" ranks above "generate" in image-work priority, and
+  this is a pure deterministic Pillow transform of already-approved pixels).
+
+### Re-validation after the fix
+
+```text
+$ venv/bin/python3 scripts/build_full_atlas.py
+...
+{
+  "ok": true, "width": 1536, "height": 1872,
+  "errors": [], "warnings": [],
+  "filled_states": ["idle","running-right","running-left","waving",
+    "jumping","failed","waiting","running","review"]
+}
+```
+
+`validate_atlas()` still passes clean — the fix only touches pixel content
+within already-valid cells, not atlas geometry.
+
+### Hash evidence: before vs. after
+
+| state | count | unique hashes BEFORE | unique hashes AFTER |
+|---|---|---|---|
+| idle | 6 | 1 | 3 |
+| running-right | 8 | 1 | 5 |
+| running-left | 8 | 1 | 5 |
+| waving | 4 | 1 | 3 |
+| jumping | 5 | 1 | 5 |
+| failed | 8 | 1 | 5 |
+| waiting | 6 | 1 | 3 |
+| running | 6 | 1 | 3 |
+| review | 6 | 1 | 3 |
+
+Every row now has more than one distinct cell hash (raw per-cell hashes in
+`assets/keyframes/atlas_full_cell_hashes.json`). Rows with an even frame
+count show a symmetric pattern (e.g. 6 frames → 3 unique hashes, in an
+up/up/neutral/down/down shape) because `sin(2πi/n)` naturally repeats
+magnitudes at symmetric phase points — this is the expected shape of a
+sine-sampled bob/breathe cycle at low frame counts, not a partial fix; no row
+regressed to 1.
+
+Reinstalled into the isolated profile and re-hashed the actual on-disk
+`spritesheet.webp` (not just the in-memory atlas) to confirm the fix survives
+the real install path:
+
+```text
+$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test venv/bin/python3 scripts/install_full_atlas_pet.py
+validate_atlas(): ok=True, filled_states=[idle, running-right, running-left,
+  waving, jumping, failed, waiting, running, review]
+registered pet 'jorgito' -> /home/chegusan/.hermes-jorgito-test/pets/jorgito/spritesheet.webp
+  exists=True generated=True
+$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test hermes pets select jorgito
+✓ active pet set to Jorgito
+$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test hermes pets doctor
+  ✓ ready  (active: jorgito)
+```
+
+The hash table above was computed against this reinstalled
+`spritesheet.webp`, not the pre-install `atlas_full.png`.
+
+### Visual evidence: consecutive frames side by side
+
+`assets/keyframes/terminal_render_phase4/frame_strip_{idle,running-right,
+jumping}.png` — each state's real per-column cells (as they land in the
+atlas) laid out left→right at 2x, NEAREST-scaled, with column labels. Visual
+inspection of `frame_strip_running-right.png` (the clearest case, 8 columns):
+the dragon visibly bobs up/down by a couple of pixels and tilts slightly
+across columns while identity, colors, and pixel-art edge sharpness are
+unchanged from column 0 — no blur, no chroma residue, no silhouette
+distortion.
+
+### Real `~/.hermes` isolation re-check (same hard restriction as §7)
+
+| check | before this fix | after this fix |
+|---|---|---|
+| `~/.hermes/config.yaml` md5 | `66684dd3b378e4584ab08ab097024ed4` | `66684dd3b378e4584ab08ab097024ed4` (unchanged) |
+| `~/.hermes/config.yaml` mtime | `2026-08-15 10:38:33` | `2026-08-15 10:38:33` (unchanged) |
+| `~/.hermes/pets/` contents | empty | empty (unchanged) |
+
+All install/select/doctor calls during this correction used
+`HERMES_HOME=/home/chegusan/.hermes-jorgito-test` exclusively; nothing in
+`full_atlas.py`/`build_full_atlas.py`/`install_full_atlas_pet.py` touches
+`HERMES_HOME` or pet-store state outside that explicit env var.
+
+### Files changed (this correction)
+
+- Modified: `scripts/full_atlas.py` — added `_vary()`, updated
+  `build_frames_by_state()` to call it per column instead of list-repeating
+  one cell; updated the module docstring (it previously described the exact
+  behavior that caused this bug).
+- Modified: `assets/keyframes/atlas_full.png` — rebuilt with varied cells.
+- Added: `assets/keyframes/atlas_full_cell_hashes.json` — per-state,
+  per-column SHA-256 hashes of the reinstalled `spritesheet.webp` (the
+  before/after evidence above).
+- Added: `assets/keyframes/terminal_render_phase4/frame_strip_{idle,
+  running-right,jumping}.png` — consecutive-frame visual evidence.
+- Not modified: `assets/keyframes/atlas_full_validation.json`,
+  `assets/keyframes/contact_sheet_phase4_full.png`,
+  `assets/keyframes/terminal_render_phase4/contact_sheet_terminal_phase4.png`
+  — all three are keyed off column 0 only (the validator's per-row
+  occupancy check, and both contact sheets' single reference pose per
+  state), which `_vary()` leaves byte-identical to the pre-fix keyframe, so
+  they did not change.
+- Not touched: `/home/chegusan/.hermes/` (real profile) — verified
+  unchanged before and after (table above).
+
 ## Decision
 
 continue
