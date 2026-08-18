@@ -86,10 +86,19 @@ def _vary(cell: Image.Image, i: int, n: int) -> Image.Image:
     if i == 0 or n <= 1:
         return cell.copy()
 
+    # bob/tilt/scale each get their own phase function (sin vs cos) rather
+    # than all three reusing sin(phase). sin(theta) == sin(pi - theta), so
+    # driving all three off the same sin(phase) made "mirrored" columns
+    # within a cycle (e.g. i and n/2-i) byte-identical to each other, and
+    # for even n the column at phase=pi collapsed all three deltas back to
+    # ~0 -- a floating-point-identical snap back to the base keyframe. Since
+    # (sin(phase), cos(phase)) uniquely determines phase for each column,
+    # pairing bob with sin and tilt/scale with cos makes every column's
+    # (dy, angle, scale) triple distinct from every other column's.
     phase = 2 * math.pi * i / n
     dy = round(_BOB_PX * math.sin(phase))
-    angle = _TILT_DEG * math.sin(phase)
-    scale = 1.0 + _SCALE_DELTA * math.sin(phase)
+    angle = _TILT_DEG * math.cos(phase)
+    scale = 1.0 - _SCALE_DELTA * math.cos(phase)
 
     w, h = cell.size
     rotated = cell.rotate(angle, resample=Image.Resampling.NEAREST, fillcolor=(0, 0, 0, 0))

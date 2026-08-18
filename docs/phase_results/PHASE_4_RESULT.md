@@ -527,6 +527,190 @@ All install/select/doctor calls during this correction used
 - Not touched: `/home/chegusan/.hermes/` (real profile) — verified
   unchanged before and after (table above).
 
+## Correction 2 (2026-08-18, cross-vendor review): mirrored/collapsing columns from shared sine phase
+
+An independent cross-vendor review (diff-only, no worktree access) of the
+"Correction (post-merge-review)" fix above found that it was real progress
+but incomplete: it stopped a row from repeating one frozen cell, but it did
+not make every column actually distinct.
+
+### The bug
+
+`_vary()`'s bob, tilt, and scale all reused the **same** `sin(phase)`:
+
+```python
+dy = round(_BOB_PX * math.sin(phase))
+angle = _TILT_DEG * math.sin(phase)
+scale = 1.0 + _SCALE_DELTA * math.sin(phase)
+```
+
+Two consequences, both confirmed against the actual hash evidence already in
+the table above (§ Correction 1):
+
+1. `sin(theta) == sin(pi - theta)`, so any pair of columns `i` and `n/2 - i`
+   (mod `n`) share the exact same `phase` → the exact same `(dy, angle,
+   scale)` triple → byte-identical cells. This is exactly why the
+   before/after table showed fewer unique hashes than frame count (e.g.
+   idle, 6 frames → only 3 unique hashes; running-right, 8 frames → only 5
+   unique) instead of `n` distinct poses: it wasn't smooth animation, it was
+   fewer duplicate poses.
+2. For even `n`, the column at `i = n/2` has `phase = pi`, where
+   `sin(pi) ≈ 0` in floating point — `dy`, `angle`, and `scale` all collapse
+   back to (approximately) exactly the base keyframe's values, producing a
+   visible pose "snap" mid-loop back to column 0's pose.
+
+Reproduced directly against the real `running-right` processed cell
+(`n=8`): columns `i=1` and `i=3` both compute `sin(phase) = 0.7071`
+(identical transform, byte-identical output), and column `i=4` computes
+`sin(phase) = 0.0` (collapses to the base pose).
+
+### The fix
+
+`scripts/full_atlas.py::_vary()` now drives bob off `sin(phase)` and tilt +
+scale off `cos(phase)` instead of all three sharing `sin(phase)`:
+
+```python
+dy = round(_BOB_PX * math.sin(phase))
+angle = _TILT_DEG * math.cos(phase)
+scale = 1.0 - _SCALE_DELTA * math.cos(phase)
+```
+
+`(sin(phase), cos(phase))` uniquely determines `phase` for each column `i`
+in `range(n)` (no two distinct angles in `[0, 2*pi)` share both values), so
+pairing bob with `sin` and tilt/scale with `cos` guarantees every column's
+`(dy, angle, scale)` triple — and therefore its rendered pixels — is
+distinct from every other column's, for every real `n` in
+`ROW_SPECS` (4, 5, 6, 8). Verified this algebraically for all four counts
+before touching any images (dumping the `(dy, angle, scale)` triples for
+`i in range(n)` and checking for duplicates — none, for `n=4,5,6,8`) and
+again empirically below via full-row hash evidence. This is a 3-line change;
+`_vary`'s structure, resample choice, and column-0-is-untouched contract are
+unchanged.
+
+### Secondary issues checked (per the reviewer's request)
+
+1. **Bob/scale correlation.** Not present after the fix: bob is driven by
+   `sin(phase)`, scale by `cos(phase)` — orthogonal, not shared amplitude
+   structure. (Tilt and scale *are* both driven by `cos(phase)`, on purpose:
+   the review's own suggested fix offered exactly this pairing, and the
+   requirement was decoupling from *bob*, not decoupling tilt from scale.)
+2. **`round()` vs `int()` truncation bias.** Checked every `round(`/`int(`
+   call site in `full_atlas.py`: both the bob delta and the scaled
+   width/height already use `round()` — there is no `int()` truncation
+   anywhere in the file, before or after this fix. Not a real bug in the
+   current code; no change made.
+3. **Rotate+resize clipping at max amplitude.** Checked empirically: for
+   every one of the 8 processed states, at every column of every real row
+   count (4/5/6/8), computed the transformed cell's non-transparent pixel
+   count (`_vary()`'s output "mass") and checked all four border rows/columns
+   of the 192x208 canvas for non-transparent pixels. Result: zero
+   border-touching pixels in every case (worst-case mass drop is ~3%, from
+   NEAREST-resample rounding at the silhouette edge during rotation, not
+   from content being pushed outside the cell). The `_fit_to_cell` pad
+   (`_CELL_PAD = 10`, i.e. ~5px margin per side) comfortably absorbs the
+   ±2% scale / ±1.5° tilt amplitude for every processed keyframe (smallest
+   observed margin: `running-right`, 5px). `_vary()`'s output canvas was
+   already a fixed `(w, h) = (CELL_WIDTH, CELL_HEIGHT)` `Image.new(...)`
+   before this fix and still is — no resize of the final cell. No change
+   made.
+4. **Tilt direction for `running-left` post-mirror.** `running-left`'s base
+   cell is `mirror_frames()` applied to `running-right`'s base (a pure
+   horizontal flip `F`), then `_vary()` runs its own rotation on top of that
+   mirrored cell using the *same* signed `angle` formula as `running-right`.
+   For a horizontal flip `F` and rotation `R_theta`, `F ∘ R_theta = R_-theta
+   ∘ F` (flipping and then rotating by `theta` is the same as rotating by
+   `-theta` and then flipping) — so `running-left` column `i`'s tilt is
+   mathematically the mirror of a `-angle_i` rotation, not `+angle_i`. This
+   is real, but it is not "the wrong way": `_vary`'s tilt is a symmetric
+   two-way wobble around 0 with no directional "lean into the run" bias
+   coded into it (unlike an actual run-cycle forward lean), and the
+   amplitude is tiny (±1.5°). The sign flip just shifts *which* columns in
+   the mirrored row lean which way; `running-left` still forms its own
+   closed, smooth bob/tilt/scale loop, and the hash table below shows every
+   column in `running-left` is distinct with no accidental collapse. No
+   change made; documented here per the reviewer's request.
+
+### Re-validation after the fix
+
+```text
+$ venv/bin/python3 scripts/build_full_atlas.py
+...
+{
+  "ok": true, "width": 1536, "height": 1872,
+  "errors": [], "warnings": [],
+  "filled_states": ["idle","running-right","running-left","waving",
+    "jumping","failed","waiting","running","review"]
+}
+```
+
+`validate_atlas()` still passes clean.
+
+### Hash evidence: full row-wise uniqueness (reinstalled spritesheet)
+
+Reinstalled into the isolated profile and hashed the actual on-disk
+`spritesheet.webp` per cell (SHA-256 of each cell's raw RGBA bytes,
+`assets/keyframes/atlas_full_cell_hashes.json`):
+
+| state | count | unique hashes (Correction 1) | unique hashes (Correction 2) |
+|---|---|---|---|
+| idle | 6 | 3 | **6** |
+| running-right | 8 | 5 | **8** |
+| running-left | 8 | 5 | **8** |
+| waving | 4 | 3 | **4** |
+| jumping | 5 | 5 | **5** |
+| failed | 8 | 5 | **8** |
+| waiting | 6 | 3 | **6** |
+| running | 6 | 3 | **6** |
+| review | 6 | 3 | **6** |
+
+Every row now has `unique == count` — no accidental duplicate pairs at all,
+not even the "true half-cycle bob-only" pairs the task anticipated as
+potentially-legitimate repeats (e.g. `n=8` columns `i=2` and `i=6` both land
+on `angle=0, scale=1.0`, but `dy=+3` vs `dy=-3` — opposite bob direction —
+so the rendered pixels still differ and the hashes still differ). `jumping`
+(`n=5`, no even-`n` symmetry to exploit) was already fully unique under
+Correction 1 and stays fully unique here.
+
+```text
+$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test venv/bin/python3 scripts/install_full_atlas_pet.py
+validate_atlas(): ok=True, filled_states=[idle, running-right, running-left,
+  waving, jumping, failed, waiting, running, review]
+registered pet 'jorgito' -> /home/chegusan/.hermes-jorgito-test/pets/jorgito/spritesheet.webp
+  exists=True generated=True
+$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test hermes pets select jorgito
+✓ active pet set to Jorgito
+$ HERMES_HOME=/home/chegusan/.hermes-jorgito-test hermes pets doctor
+  ✓ ready  (active: jorgito)
+```
+
+### Real `~/.hermes` isolation re-check (same hard restriction as Correction 1 / §7)
+
+| check | before this fix | after this fix |
+|---|---|---|
+| `~/.hermes/config.yaml` md5 | `66684dd3b378e4584ab08ab097024ed4` | `66684dd3b378e4584ab08ab097024ed4` (unchanged) |
+| `~/.hermes/config.yaml` mtime | `2026-08-15 10:38:33` | `2026-08-15 10:38:33` (unchanged) |
+| `~/.hermes/pets/` contents | empty | empty (unchanged) |
+
+All install/select/doctor calls used `HERMES_HOME=/home/chegusan/.hermes-jorgito-test`
+exclusively; `install_full_atlas_pet.py` also has its own hardcoded guard
+that refuses to run if `HERMES_HOME` resolves to the real `~/.hermes`.
+
+### Files changed (this correction)
+
+- Modified: `scripts/full_atlas.py` — `_vary()`'s tilt and scale now use
+  `math.cos(phase)` instead of `math.sin(phase)`; bob is unchanged
+  (`math.sin(phase)`). 3-line diff, no structural change.
+- Modified: `assets/keyframes/atlas_full.png` — rebuilt with decoupled
+  bob/tilt/scale phases.
+- Modified: `assets/keyframes/atlas_full_cell_hashes.json` — regenerated
+  from the reinstalled `spritesheet.webp` (the hash table above).
+- Not modified: `assets/keyframes/atlas_full_validation.json`,
+  `assets/keyframes/contact_sheet_phase4_full.png` — both are keyed off
+  column 0 only, which `_vary()` still leaves byte-identical to the
+  pre-fix/pre-Correction-1 keyframe.
+- Not touched: `/home/chegusan/.hermes/` (real profile) — verified
+  unchanged before and after (table above).
+
 ## Decision
 
 continue
