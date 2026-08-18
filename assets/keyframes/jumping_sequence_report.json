@@ -1,0 +1,75 @@
+{
+  "state": "jumping",
+  "provider": "openrouter",
+  "balance_before_run": {
+    "total_credits": 20,
+    "total_usage": 13.5564665,
+    "balance": 6.443533499999999
+  },
+  "poses": [
+    {
+      "name": "pose1",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/reference/jorgito_canonical.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito winding up to jump, pose 1 of 3: crouched low and close to the ground, knees bent deeply, body compact and hunched down, both arms pulled back and down close to the sides as if coiling energy, wings folded flat and tucked against its back, head tilted slightly down with a focused, determined expression, eyes narrowed -- a clear low, compact, grounded silhouette, nothing raised or extended. The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 29.8,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_183958_b05d2d37.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/raw_single_pose/jumping_pose1.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose1.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.5564665,
+        "balance": 6.443533499999999
+      }
+    },
+    {
+      "name": "pose2",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/raw_single_pose/jumping_pose1.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito at the peak of a celebratory jump, pose 2 of 3: fully airborne with both feet off the ground and legs extended/tucked beneath it, body stretched tall and upright, both arms raised straight up above its head in an exuberant cheering gesture (paws open), wings spread open and flared out to the sides, head tilted back slightly, big wide-open joyful smile and bright excited eyes -- a clear tall, open, airborne silhouette, unmistakably different from the crouched pose 1 (arms up not down, wings open not folded, body stretched not compact, off the ground not grounded). The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 17.7,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_184016_d65ee060.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/raw_single_pose/jumping_pose2.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose2.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.5564665,
+        "balance": 6.443533499999999
+      }
+    },
+    {
+      "name": "pose3",
+      "reference_images": [
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/reference/jorgito_canonical.png",
+        "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/raw_single_pose/jumping_pose2.png"
+      ],
+      "prompt": "Using the attached reference image as the exact same character (same species, face, colors, markings, proportions, and props: a small friendly Petdex-style pixel-art dragon mascot, crimson/burgundy body, large green eyes, yellow belly/neck plates and wing membranes, red wings, curled tail), preserving the same emotional tone/mood, draw ONE single pixel-art pose of this character showing: Jorgito landing after the jump, pose 3 of 3: back on the ground, knees bent and braced to absorb the landing impact, both arms out to the sides at roughly shoulder height for balance (paws open), wings half-open and settling downward, torso leaning slightly forward, a satisfied happy grin with eyes still bright from the jump -- a clear wide, braced, grounded silhouette, unmistakably different from both pose 1 (arms out to the sides not pulled in, wings settling not folded flat, torso leaning forward not hunched down) and pose 2 (feet back on the ground, arms out not raised overhead). The character is centered in the frame, whole body visible (nothing cropped at the edges), drawn at a consistent, healthy, clearly visible size -- not shrunk tiny, not overflowing the frame. This is a SINGLE standalone image: exactly one character, one pose, no additional frames, no strip, no grid, no panels, no repeated or duplicated poses anywhere in the image. Center the character on a SINGLE flat, uniform, high-contrast chroma-key background -- pure hot magenta #FF00FF (only if magenta appears on the character, use pure green #00FF00 instead). The background is ONE continuous even color that completely surrounds the character with NO gradient, vignette, texture, pattern, scenery, shadow, ground line, frame, border, panel, or divider of any kind, so it keys out cleanly. The background color must not appear anywhere on the character. No text, no labels, no speech bubbles, no UI. Style: crisp 16-bit PIXEL-ART game sprite -- visible square pixels, a small limited palette, clean dark outline, flat cel shading, chunky chibi proportions, like a classic SNES/JRPG party member or a petdex.dev mascot. Absolutely NOT 3D-rendered, NOT a smooth painted or vector illustration, NOT photorealistic -- no soft gradients, no realistic lighting, no figurine look.",
+      "status": "success",
+      "elapsed_s": 23.2,
+      "raw_path": "/home/chegusan/.hermes-jorgito-test/cache/images/openrouter_gen_20260818_184039_74e972d6.png",
+      "raw_copy": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/raw_single_pose/jumping_pose3.png",
+      "processed_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose3.png",
+      "balance_after_immediate": {
+        "total_credits": 20,
+        "total_usage": 13.5564665,
+        "balance": 6.443533499999999
+      }
+    }
+  ],
+  "balance_after_run_immediate": {
+    "total_credits": 20,
+    "total_usage": 13.6983225,
+    "balance": 6.3016775
+  },
+  "spent_usd_immediate": 0.1419,
+  "processed_paths": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose3.png"
+  ]
+}

@@ -917,4 +917,164 @@ runner script.
 - `assets/keyframes/failed_row_preview.gif` (new).
 - `assets/keyframes/failed_row_report.json` (new).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+
+## Addendum #5 — `jumping` row (3 poses, 5 frames)
+
+**Status: DONE, `jumping` state only, awaiting human visual gate.** Applied
+the generalized pattern (`scripts/pose_sequence.py` + `scripts/state_row.py`,
+unmodified from addendum #3) to `jumping`, per `docs/04_ASSET_SPEC.md`'s
+"Jumping: Short celebratory jump; slight wing opening". No new refactor
+needed — only a thin per-state runner pair, same shape as `waiting`'s and
+`failed`'s.
+
+### Step 1 — confirm `jumping`'s row frame count and real state key
+
+`agent.pet.generate.atlas.ROW_SPECS`: `("jumping", 4, 5)` — row index 4,
+**5 frames**, shorter than every other row generated so far (`review`/
+`waiting` = 6, `failed` = 8). Read directly from the real source
+(`/home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py`). Also
+confirms the real Hermes state key is `"jumping"`, not `"jump"` — used
+throughout the runner scripts and in `atlas.compose_atlas({"jumping": ...})`.
+
+### Step 2 — generate 3 real chained poses, explicitly forcing distinct silhouettes
+
+New `scripts/generate_jumping_sequence.py` (thin runner over
+`pose_sequence.generate_pose_sequence`). Following `waiting`'s "too subtle"
+caveat and `failed`'s successful fix, each action description asks for a
+structurally different body pose/silhouette, not just an expression shift:
+
+1. **pose1 (crouched wind-up):** low, compact, grounded stance — knees bent,
+   both arms pulled down/back, wings folded flat against the back, focused
+   expression.
+2. **pose2 (airborne celebratory peak)**, grounded on canonical + pose1's raw
+   output: both arms raised straight up in an exuberant cheer, wings spread
+   open and flared, big joyful open-mouth expression — a tall, open
+   silhouette, explicitly the opposite of pose1's compact/closed one.
+3. **pose3 (landing/braced)**, grounded on canonical + pose2's raw output:
+   back on the ground, knees bent absorbing impact, both arms out to the
+   sides at shoulder height for balance, wings half-open and settling, happy
+   satisfied grin — a wide, braced silhouette distinct from both pose1 (arms
+   position, wing state) and pose2 (grounded vs. airborne, arms out vs. up).
+
+All 3 calls succeeded (`imagegen.generate(n=1, ...)`, one call each, no
+retries, no fallback provider). Elapsed: 29.8s / 17.7s / 23.2s.
+
+**Result: clearly distinguishable poses**, confirmed by direct visual
+inspection of the processed cells — pose1 shows a standing/ready stance with
+wings folded flat and arms down; pose2 shows both arms raised overhead with
+wings fully spread and an airborne read; pose3 shows arms out to the sides
+with wings open and a grounded, braced stance. No two poses share the same
+arm position + wing state combination — a stronger differentiation than
+`waiting`'s caveat and comparable to `failed`'s successful fix.
+
+### Step 3 — process through chroma-key/fit-to-cell
+
+Same pipeline as `review`/`waiting`/`failed`: `atlas.remove_background(rgba,
+chroma_key=None, threshold=90.0)` + `atlas._fit_to_cell()`, applied inline
+inside `generate_pose_sequence` immediately after each successful call.
+Output: `assets/keyframes/processed/jumping_pose{1,2,3}.png`, each 192x208
+RGBA. No un-keyed shadow artifact observed this time (unlike `failed`'s
+pose3 caveat).
+
+### Step 4 — build the real `jumping` row (5 frames, 3 real poses)
+
+New `scripts/build_jumping_row.py` (thin runner over
+`state_row.build_state_row`). `_pingpong_order(3, 5)` takes the first 5
+entries of the base 6-length ping-pong cycle (`[0,1,2,2,1,0]` truncated to
+5): `[0, 1, 2, 2, 1]` (pose1, pose2, pose3, pose3, pose2) — the generalized
+helper handles the shorter row without any state-specific logic. Phase 4
+`_vary()` wobble applied on top of each real pose, same as every prior row.
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 (crouched wind-up) | `6b29aab6a1a64086` |
+| 1 | pose 2 (airborne peak) | `330e2082e1f6c833` |
+| 2 | pose 3 (landing/braced) | `6132db1437cd8b6e` |
+| 3 | pose 3 (landing/braced) | `b35ef0eaef366846` |
+| 4 | pose 2 (airborne peak) | `7dc397020e1b42f6` |
+
+**5/5 unique.**
+
+### Step 5 — validation
+
+Full-size (1536×1872) atlas image via `atlas.compose_atlas({"jumping":
+frames})`, only the `jumping` row filled. Hermes's real, unmodified
+`atlas.validate_atlas()`:
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": [
+    "state 'idle' has no frames", "state 'running-right' has no frames",
+    "state 'running-left' has no frames", "state 'waving' has no frames",
+    "state 'failed' has no frames", "state 'waiting' has no frames",
+    "state 'running' has no frames", "state 'review' has no frames"
+  ],
+  "filled_states": ["jumping"]
+}
+```
+
+`ok: true`, zero errors — same clean geometry result as every prior row.
+
+### Step 6 — visual gate evidence
+
+- `assets/keyframes/jumping_row_contact_sheet.png` — all 5 row frames,
+  labeled `col{i}: pose{N}`, **sent to the user via SendUserFile**.
+- `assets/keyframes/jumping_row_preview.gif` — looping animated preview
+  (280ms/frame, upscaled 3x), **sent to the user via SendUserFile**.
+- `assets/keyframes/jumping_row_atlas_fragment.png` — full-size atlas image
+  used for `validate_atlas()`, `jumping` row only.
+- `assets/keyframes/jumping_row_report.json` — row order, all 5 hashes, full
+  `validate_atlas()` output, file paths.
+
+### Cost
+
+| | |
+|---|---|
+| Balance before (immediate, free `/credits` check) | $6.4435 |
+| Balance after (immediate, free `/credits` check) | $6.3017 |
+| **Spent this addendum (3 new `generate()` calls)** | **$0.1419** (~$0.0473/call — cheaper than prior addenda's ~$0.14/call, consistent with `jumping`'s shorter/simpler poses) |
+
+Full before/after readings in `assets/keyframes/jumping_sequence_report.json`.
+
+### Safety verification
+
+- `HERMES_HOME` used throughout: `/home/chegusan/.hermes-jorgito-test` only
+  (`generate_pose_sequence` carries the same refusal guard as every prior
+  Phase 2B script; `build_state_row` is pure image processing, no
+  `HERMES_HOME` needed at all).
+- Real `~/.hermes/config.yaml`: md5 `66684dd3b378e4584ab08ab097024ed4`,
+  mtime `1786786713` — **identical to every prior check in this doc**,
+  confirmed again after this addendum's 3 API calls.
+- Real `~/.hermes/pets/` still absent (same as every prior check). The only
+  files touched during this addendum's generation calls landed under
+  `~/.hermes-jorgito-test/cache/images/` (isolated profile); the only writes
+  observed anywhere under the real `~/.hermes/` were pre-existing background
+  daemon heartbeat files (`cron/ticker_heartbeat`, `state/gateway.heartbeat`,
+  `cron/.tick.lock`), unrelated to this session's generation calls.
+
+### Decision
+
+**Addendum #5 done, `jumping` state only, awaiting human visual gate** on
+`assets/keyframes/jumping_row_contact_sheet.png` and
+`assets/keyframes/jumping_row_preview.gif`. Per the task's explicit scope,
+stopped after `jumping` — no other state was touched. If approved, the
+natural next step is the same pattern for the remaining 2 states (`waving`,
+`running`), each needing only a new thin runner script.
+
+### Files changed (addendum #5)
+
+- `scripts/generate_jumping_sequence.py` (new — thin `jumping` runner).
+- `scripts/build_jumping_row.py` (new — thin `jumping` runner).
+- `assets/keyframes/raw_single_pose/jumping_pose{1,2,3}.png` (new).
+- `assets/keyframes/processed/jumping_pose{1,2,3}.png` (new).
+- `assets/keyframes/jumping_sequence_report.json` (new).
+- `assets/keyframes/jumping_row_atlas_fragment.png` (new).
+- `assets/keyframes/jumping_row_contact_sheet.png` (new).
+- `assets/keyframes/jumping_row_preview.gif` (new).
+- `assets/keyframes/jumping_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).
