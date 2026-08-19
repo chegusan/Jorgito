@@ -81,11 +81,12 @@ Severity uses the brief's own P0–P3 scale, applied honestly to this codebase.
 
 | ID | Sev | Title | Files | Status |
 | :-- | :-: | :--- | :--- | :--- |
-| F-1 | 🟠 **P1** | Non-reproducible: hardcoded absolute path + undeclared deps mean the pipeline runs on exactly one machine | all 8 script modules | Open — needs decision |
-| F-2 | 🟠 **P1** | DRY violations the repo's own rules forbid: bootstrap block ×8, `HERMES_HOME` safety guard ×4, preview-render logic ×2 | see detail | Open — needs decision |
+| F-1 | 🟠 **P1** | Non-reproducible: hardcoded absolute path + undeclared deps mean the pipeline runs on exactly one machine | all 8 script modules | **Partly fixed** — `requirements.txt` added; hardcoded path deferred to F-2 |
+| F-2 | 🟠 **P1** | DRY violations the repo's own rules forbid: bootstrap block ×8, `HERMES_HOME` safety guard ×4, preview-render logic ×2 | see detail | Open — needs decision (§6 #2) |
 | F-3 | 🟡 **P2** | Depends on Hermes **private** APIs (`_fit_to_cell`, `_frames`, `_downscale_cells`) with no version pin | `keyframe_processing.py`, `render_*` | Open |
-| F-4 | 🟡 **P2** | Zero tests despite `docs/06_TEST_PLAN.md`; the deterministic transforms are the *most* testable code here | whole repo | Open — needs decision |
-| F-5 | 🟢 **P3** | Unreferenced/duplicate assets & filename hygiene (`Code_Generated_Image.png`, `Jorgito  Plan.md` double space) | assets, root | Open |
+| F-4 | 🟡 **P2** | Zero tests despite `docs/06_TEST_PLAN.md`; the deterministic transforms are the *most* testable code here | whole repo | **Fixed** — `tests/` (24 tests) + CI added |
+| F-5 | 🟢 **P3** | Filename hygiene / dead import (`Jorgito  Plan.md` double space, unused `Path` import) | root, `scripts/` | **Fixed** — renamed + import removed |
+| F-6 | 🟢 **P3** | `full_atlas._vary` frame-distinctness is cell-size-dependent (verified fine on real 192×208 cells) | `full_atlas.py` | Verified OK — regression-tested |
 | N/A | — | Brief items with no counterpart here (state engine, IndexedDB, Zustand, Web Workers, 60fps, Tailwind, ESLint) | — | Not applicable |
 
 **No P0 (blocker) findings.** No data-loss race, no crash, no security hole, no
@@ -193,13 +194,31 @@ validating the F-2 refactor.
 
 ---
 
+### F-6 🟢 P3 — `_vary` distinctness is cell-size-dependent (verified safe)
+
+While writing the F-4 regression tests I checked `full_atlas._vary`'s claim that
+every column of a row renders distinct. It is **true on real-size cells but not
+universally**: on a tiny/near-empty cell the sub-pixel bob/tilt/scale rounds away
+and frames collapse (measured: a 16×20 synthetic cell gave only 1/2 distinct at
+n=2, 3/6 at n=6). On **realistically-sized 192×208 cells — including the actual
+committed `assets/keyframes/processed/*.png` — distinctness is perfect (2/2 …
+12/12)**. So there is **no production bug**; the frozen-row regression the code
+guards against does not occur for real Jorgito cells. This is now locked down by
+`tests/test_full_atlas_vary.py`, which exercises both a seeded 192×208 cell and
+the real committed keyframes. Worth a one-line note in `_vary`'s docstring that
+the guarantee assumes a detailed, real-size cell — left as an optional follow-up.
+
+---
+
 ### F-5 🟢 P3 — Asset & filename hygiene (mechanical)
 
 - `assets/reference/Code_Generated_Image.png` — a generic auto-generated name;
-  referenced only by `docs/phase_results/PHASE_0_RESULT.md`, not by any script.
-  Rename to something descriptive or confirm it's an intentional Phase-0 artifact.
-- `Jorgito  Plan.md` — **two spaces** in the filename. Rename to `Jorgito_Plan.md`
-  (or fold into `docs/`) for shell-friendliness.
+  referenced only by `docs/phase_results/PHASE_0_RESULT.md` as historical Phase-0
+  evidence. **Kept as-is** (intentional evidence artifact); renaming a doc-cited
+  historical file is not worth the churn.
+- `Jorgito  Plan.md` — **two spaces** in the filename. **Renamed** to
+  `Jorgito_Plan.md` for shell-friendliness.
+- The unused `Path` import in `scripts/process_phase1_keyframes.py` — **removed**.
 - Raw sources are lossy **JPEG** (`assets/keyframes/raw/*.jpeg`); the pipeline
   already compensates with a widened chroma threshold (`JPEG_CHROMA_THRESHOLD`),
   so this is *documented and handled*, not a defect — noted only for the record.
@@ -260,5 +279,28 @@ here-unrunnable code, I need one decision so I respect the project's own
    machine, before pushing it.
 3. **Leave the code as-is** and treat this report as documentation only.
 
-My recommendation: **#1 now**, then **#2** once the tests exist. I have not made
-any of these changes yet — this report is the only change on this branch.
+My recommendation: **#1 now**, then **#2** once the tests exist.
+
+---
+
+## 7. Changes made in this branch (option #1 — done)
+
+Per the maintainer's go-ahead, the **safe additive fixes** are implemented on
+this branch, each as an atomic, single-purpose commit:
+
+- **`requirements.txt` / `requirements-dev.txt`** — declares the previously
+  undeclared Pillow dependency and the dev/CI tools (partly addresses F-1).
+- **`tests/` (24 unit tests, Pillow-only)** — covers `full_atlas._vary`
+  (column-0 fidelity, size preservation, frozen-row distinctness on real-size
+  cells) and `keyframe_processing.build_contact_sheet` geometry, via a minimal
+  Hermes stub (`tests/conftest.py`) so they run with no Hermes source. Fixes F-4.
+- **`.github/workflows/ci.yml`** — byte-compiles every script, runs `ruff`, runs
+  `pytest` on push/PR.
+- **P3 hygiene** — renamed `Jorgito  Plan.md` → `Jorgito_Plan.md`; removed an
+  unused `Path` import in `scripts/process_phase1_keyframes.py`.
+
+All local checks pass: `py_compile` (11 scripts), `ruff check` clean, `pytest`
+24/24 green. **No pipeline behavior was changed.** The F-1 hardcoded-path
+removal and the F-2 shared-module refactor remain open (§6 #2) — they edit
+working scripts that still can't be executed here, so they await either the new
+test harness proving them or a run on a Hermes-equipped machine.
