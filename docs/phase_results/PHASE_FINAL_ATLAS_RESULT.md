@@ -241,6 +241,72 @@ ERROR: refusing to run against the real ~/.hermes profile.
   cada fila individualmente seguiría pareciendo válida y única, sólo que
   con el contenido del estado equivocado.
 
+## Fix #2 post cross-review (opencode, pasada más rigurosa) — guardia no cubría subdirectorios de `~/.hermes` real
+
+Un segundo cross-review independiente (misma herramienta, pasada más
+rigurosa) encontró que el fix #1 (arriba) es correcto para el caso symlink,
+pero deja pasar un caso relacionado: la comparación seguía siendo `==`
+estricta, así que si `HERMES_HOME` apunta a un **subdirectorio** del
+`~/.hermes` real (ej. `HERMES_HOME=/home/chegusan/.hermes/pets`, o un
+symlink que resuelve a un subdirectorio de `~/.hermes`), la guardia no lo
+detecta — el script escribiría igual dentro del perfil real (ej. en
+`~/.hermes/pets/pets/`).
+
+**Fix aplicado** en ambos scripts (`install_final_atlas_pet.py`,
+`render_final_atlas_pet.py`): se agregó la condición de descendencia además
+de la igualdad estricta:
+
+```python
+hermes_resolved = Path(hermes_home).resolve()
+real_hermes = (Path.home() / ".hermes").resolve()
+if hermes_resolved == real_hermes or real_hermes in hermes_resolved.parents:
+    print("ERROR: refusing to run against or within the real ~/.hermes profile.", file=sys.stderr)
+    sys.exit(1)
+```
+
+**Re-verificación explícita** (extendida en `scripts/test_hermes_home_guard.py`,
+no reemplazado — ahora compara tres guardias sucesivas: `original` con el
+bug de symlink del fix #1, `equality_only` con el fix #1 aplicado pero
+vulnerable al subdirectorio, y `descendant_aware` con el fix #2 aplicado):
+
+```
+[round1: bypass via symlink target] original blocks=False equality_only blocks=True descendant_aware blocks=True
+[round1: direct symlink path] original blocks=False equality_only blocks=True descendant_aware blocks=True
+[round2: subdir via symlink path (e.g. ~/.hermes/pets)] original blocks=False equality_only blocks=False descendant_aware blocks=True
+[round2: subdir via resolved target] original blocks=False equality_only blocks=False descendant_aware blocks=True
+[isolated profile (no false positive)] original blocks=False equality_only blocks=False descendant_aware blocks=False
+
+All checks passed: both the symlink bypass (round 1) and the subdirectory bypass (round 2)
+are reproduced against their respective pre-fix guards and closed by descendant_aware_guard_blocks
+(the guard now deployed in install_final_atlas_pet.py and render_final_atlas_pet.py), with no
+false positive on a genuinely isolated profile.
+```
+
+Confirma: (1) la guardia `equality_only` (fix #1) sí cierra el bypass de
+symlink pero deja pasar ambas formas del bypass de subdirectorio; (2) la
+guardia `descendant_aware` (fix #2, la desplegada) cierra los 5 casos; (3)
+ningún falso positivo contra el perfil aislado genuino.
+
+También se re-corrió el pipeline completo end-to-end tras el fix
+(`build_final_atlas.py` → `install_final_atlas_pet.py` →
+`render_final_atlas_pet.py`) contra `/home/chegusan/.hermes-jorgito-test`:
+mismo resultado exacto que antes (atlas, webp, y contact sheet a escala real
+byte-idénticos a los ya committeados — `git diff --stat` vacío sobre esos
+archivos). Y se confirmó **en vivo** (no sólo en el test unitario) que la
+guardia desplegada rechaza ambos casos:
+
+```
+$ HERMES_HOME=/home/chegusan/.hermes/pets install_final_atlas_pet.py
+ERROR: refusing to run against or within the real ~/.hermes profile.
+
+$ HERMES_HOME=/home/chegusan/.hermes install_final_atlas_pet.py
+ERROR: refusing to run against or within the real ~/.hermes profile.
+```
+
+`~/.hermes` real verificado intacto antes y después de todo lo anterior
+(md5 `config.yaml` = `66684dd3b378e4584ab08ab097024ed4` sin cambios, `pets/`
+sigue vacío).
+
 ## Riesgos / decisiones a ojo del usuario
 
 - El estado `running` en el atlas corresponde al `run` corto usado por

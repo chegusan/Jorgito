@@ -72,8 +72,10 @@ def main() -> None:
     if not hermes_home:
         print("ERROR: HERMES_HOME must be set (isolated test profile).", file=sys.stderr)
         sys.exit(1)
-    if Path(hermes_home).resolve() == (Path.home() / ".hermes").resolve():
-        print("ERROR: refusing to run against the real ~/.hermes profile.", file=sys.stderr)
+    hermes_resolved = Path(hermes_home).resolve()
+    real_hermes = (Path.home() / ".hermes").resolve()
+    if hermes_resolved == real_hermes or real_hermes in hermes_resolved.parents:
+        print("ERROR: refusing to run against or within the real ~/.hermes profile.", file=sys.stderr)
         sys.exit(1)
 
     pet = store.load_pet("jorgito")
