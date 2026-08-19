@@ -160,7 +160,6 @@ def main() -> None:
         print(f"prompt ({len(prompt)} chars):\n{prompt}\n")
 
         pose_report: dict = {"name": name, "reference_images": [str(BASE_IMAGE), str(prev_raw)], "prompt": prompt}
-        balance_before = _credits()
 
         t0 = time.monotonic()
         raw_path: Path | None = None
