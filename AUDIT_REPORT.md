@@ -81,8 +81,8 @@ Severity uses the brief's own P0–P3 scale, applied honestly to this codebase.
 
 | ID | Sev | Title | Files | Status |
 | :-- | :-: | :--- | :--- | :--- |
-| F-1 | 🟠 **P1** | Non-reproducible: hardcoded absolute path + undeclared deps mean the pipeline runs on exactly one machine | all 8 script modules | **Partly fixed** — `requirements.txt` added; hardcoded path deferred to F-2 |
-| F-2 | 🟠 **P1** | DRY violations the repo's own rules forbid: bootstrap block ×8, `HERMES_HOME` safety guard ×4, preview-render logic ×2 | see detail | Open — needs decision (§6 #2) |
+| F-1 | 🟠 **P1** | Non-reproducible: hardcoded absolute path + undeclared deps mean the pipeline runs on exactly one machine | all 8 script modules | **Fixed** — `HERMES_AGENT_SRC` env override + `requirements.txt` |
+| F-2 | 🟠 **P1** | DRY violations the repo's own rules forbid: bootstrap block ×8, `HERMES_HOME` safety guard ×4, preview-render logic ×2 | see detail | **Mostly fixed** — bootstrap+guard consolidated in `scripts/hermes_env.py`; preview-render dedup deferred |
 | F-3 | 🟡 **P2** | Depends on Hermes **private** APIs (`_fit_to_cell`, `_frames`, `_downscale_cells`) with no version pin | `keyframe_processing.py`, `render_*` | Open |
 | F-4 | 🟡 **P2** | Zero tests despite `docs/06_TEST_PLAN.md`; the deterministic transforms are the *most* testable code here | whole repo | **Fixed** — `tests/` (24 tests) + CI added |
 | F-5 | 🟢 **P3** | Filename hygiene / dead import (`Jorgito  Plan.md` double space, unused `Path` import) | root, `scripts/` | **Fixed** — renamed + import removed |
@@ -299,8 +299,39 @@ this branch, each as an atomic, single-purpose commit:
 - **P3 hygiene** — renamed `Jorgito  Plan.md` → `Jorgito_Plan.md`; removed an
   unused `Path` import in `scripts/process_phase1_keyframes.py`.
 
-All local checks pass: `py_compile` (11 scripts), `ruff check` clean, `pytest`
-24/24 green. **No pipeline behavior was changed.** The F-1 hardcoded-path
-removal and the F-2 shared-module refactor remain open (§6 #2) — they edit
-working scripts that still can't be executed here, so they await either the new
-test harness proving them or a run on a Hermes-equipped machine.
+All local checks pass: `py_compile` (12 scripts), `ruff check` clean, `pytest`
+24/24 green. **No pipeline behavior was changed.**
+
+## 8. Changes made in this branch (option #2 — F-1 / F-2)
+
+- **`scripts/hermes_env.py`** — a single owner for two concepts previously
+  copy-pasted across the scripts:
+  - `hermes_src()` / `ensure_hermes_on_path()` resolve the Hermes source from the
+    **`HERMES_AGENT_SRC`** env var, falling back to the original path. This
+    removes the machine-specific hardcoding from all 8 scripts (**F-1**); the one
+    remaining literal is the documented, overridable default in this module.
+  - `require_isolated_hermes_home()` — the "refuse to run against the real
+    `~/.hermes`" **safety guard**, formerly duplicated verbatim in 4 scripts,
+    now with exactly one owner (**F-2**).
+- **All 8 scripts rewired** to the shared module; hardcoded-path usage examples
+  in docstrings made portable; an obsolete inline `sys.path` hack removed from
+  `generate_phase1.py`.
+- **`tests/test_hermes_env.py`** (8 tests) — locks down the safety guard
+  (unset / blank / real-profile / isolated) and the env-override resolution.
+  Total suite now **32 tests, all green**; `ruff` clean; all 12 scripts compile.
+
+**Deferred (still open):** the F-2 *preview-render* dedup between
+`render_phase1_test_pet.py` and `render_full_atlas_pet.py`. That code calls
+Hermes rendering internals (`PetRenderer._frames`, `_downscale_cells`) that can't
+be executed or tested in this environment, so extracting it carries validation
+risk the bootstrap/guard consolidation did not. Recommend doing it on a
+Hermes-equipped machine where the two render scripts can actually be run and
+their PNG output compared before/after.
+
+> **Note on validation:** as before, the Hermes-dependent scripts can't be
+> *executed* here (no Hermes source, no Pillow-in-Hermes-venv). The refactor is
+> validated by: byte-compilation of all 12 scripts, `ruff` (which would flag any
+> now-undefined name or unused import from the rewrite), the 32-test suite
+> exercising the extracted `hermes_env` logic directly, and line-by-line review
+> that each rewired header preserves the original import surface. A run on a
+> Hermes-equipped machine remains the final confirmation for the entrypoints.
