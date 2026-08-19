@@ -162,6 +162,85 @@ propio código fuente como decisión deliberada (paridad con el reproductor
 CSS del petdex web). Se documenta acá para que quede explícito antes de
 Fase 5, no porque bloquee este gate.
 
+## Fix post cross-review (opencode) — guardia de `~/.hermes` real bypassable con symlink
+
+Cross-review independiente encontró un issue **bloqueante**: la guardia que
+debe negarse a correr contra el `~/.hermes` real,
+
+```python
+if Path(hermes_home).resolve() == Path.home().resolve() / ".hermes":
+```
+
+solo resolvía `Path.home()`, no el componente `.hermes` concatenado
+después. Si `~/.hermes` fuera alguna vez un symlink (setup común con
+dotfile managers tipo stow/chezmoi), el lado izquierdo (`Path(hermes_home).resolve()`)
+sigue cualquier symlink en `hermes_home` y llega al directorio real; el lado
+derecho se queda con la ruta *sin resolver* del symlink — nunca son iguales,
+y la guardia deja pasar la ejecución contra los datos reales. El reviewer lo
+reprodujo empíricamente con un symlink de prueba (`bypass_successful = True`).
+
+**Fix aplicado** en `scripts/install_final_atlas_pet.py` y
+`scripts/render_final_atlas_pet.py` (guardia duplicada en ambos):
+
+```python
+if Path(hermes_home).resolve() == (Path.home() / ".hermes").resolve():
+```
+
+Ahora ambos lados resuelven la ruta completa, incluyendo un eventual symlink
+en `~/.hermes`.
+
+**Re-verificación explícita del caso symlink** (no alcanza con re-correr el
+pipeline normal, según pidió el reviewer): `scripts/test_hermes_home_guard.py`
+crea un `HOME` falso en un directorio temporal, con `.hermes` como symlink a
+un target real, y reproduce el bypass:
+
+```
+[bypass via symlink target] old_guard blocks=False new_guard blocks=True
+[direct symlink path]      old_guard blocks=False new_guard blocks=True
+[isolated profile]         old_guard blocks=False new_guard blocks=False
+
+All checks passed: the symlink bypass is reproduced against the old guard and closed by the new one.
+```
+
+Confirma: (1) la guardia vieja NO bloqueaba el bypass del reviewer — bug
+reproducido; (2) la guardia vieja tampoco bloqueaba pasar el propio path del
+symlink `~/.hermes` directamente — el bug era más amplio de lo reportado
+inicialmente, afecta cualquier invocación mientras `~/.hermes` sea symlink,
+no sólo cuando alguien pasa el target resuelto a mano; (3) la guardia nueva
+bloquea ambos casos; (4) ningún falso positivo contra un perfil aislado
+genuino.
+
+También se re-corrió el pipeline completo end-to-end tras el fix
+(`build_final_atlas.py` → `install_final_atlas_pet.py` →
+`render_final_atlas_pet.py`) contra el perfil aislado real
+(`/home/chegusan/.hermes-jorgito-test`): mismo resultado exacto que antes
+(atlas final md5 `127e61046bfc95912df7d6ec5b189e08` sin cambios, 9/9
+estados, hashes únicos), y se verificó explícitamente que
+`HERMES_HOME=/home/chegusan/.hermes` (el real) es rechazado por la guardia
+arreglada:
+
+```
+$ HERMES_HOME=/home/chegusan/.hermes install_final_atlas_pet.py
+ERROR: refusing to run against the real ~/.hermes profile.
+```
+
+### No bloqueantes también resueltos (bajo costo, ya en el archivo)
+
+- `render_final_atlas_pet.py` migrado de `renderer._frames(state)[0]` +
+  `_downscale_cells` (privados) a la API pública `renderer.cells(state, 0,
+  cols=cols)` — mismo grid de celdas, mismo resultado (contact sheet
+  re-generado, byte-idéntico al anterior).
+- `build_final_atlas.py`: `ROW_SOURCES` dejó de guardar un `source_row`
+  redundante con `atlas.ROW_SPECS`; el crop siempre usa el `row` canónico de
+  `ROW_SPECS`, eliminando la posibilidad de que ambos números diverjan.
+  Además se agregó `_assert_no_cross_state_collisions()`: compara hashes
+  entre todo par de estados que comparten un mismo archivo fuente (hoy sólo
+  `idle`/`running`, ambos desde `atlas_full.png`) y aborta si dos estados
+  distintos terminaran con frames idénticos — el caso que `validate_atlas()`
+  y el chequeo de unicidad intra-fila no detectarían por sí solos, porque
+  cada fila individualmente seguiría pareciendo válida y única, sólo que
+  con el contenido del estado equivocado.
+
 ## Riesgos / decisiones a ojo del usuario
 
 - El estado `running` en el atlas corresponde al `run` corto usado por

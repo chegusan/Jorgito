@@ -27,7 +27,7 @@ if str(HERMES_SRC) not in sys.path:
 
 from agent.pet import store  # noqa: E402
 from agent.pet.constants import DEFAULT_SCALE, cols_for_scale  # noqa: E402
-from agent.pet.render import PetRenderer, _downscale_cells  # noqa: E402
+from agent.pet.render import PetRenderer  # noqa: E402
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
@@ -53,8 +53,7 @@ BG = (24, 24, 24, 255)
 
 
 def _render_state_preview(renderer: PetRenderer, state: str, cols: int) -> Image.Image:
-    frame = renderer._frames(state)[0]  # noqa: SLF001 - same scaled frame the encoder uses
-    grid = _downscale_cells(frame, target_cols=cols)
+    grid = renderer.cells(state, 0, cols=cols)  # public API, same grid _frames()+_downscale_cells() built
     rows = len(grid)
     cell_cols = len(grid[0]) if rows else 0
 
@@ -73,7 +72,7 @@ def main() -> None:
     if not hermes_home:
         print("ERROR: HERMES_HOME must be set (isolated test profile).", file=sys.stderr)
         sys.exit(1)
-    if Path(hermes_home).resolve() == Path.home().resolve() / ".hermes":
+    if Path(hermes_home).resolve() == (Path.home() / ".hermes").resolve():
         print("ERROR: refusing to run against the real ~/.hermes profile.", file=sys.stderr)
         sys.exit(1)
 

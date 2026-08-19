@@ -47,7 +47,7 @@ def main() -> None:
             file=sys.stderr,
         )
         sys.exit(1)
-    if Path(hermes_home).resolve() == Path.home().resolve() / ".hermes":
+    if Path(hermes_home).resolve() == (Path.home() / ".hermes").resolve():
         print("ERROR: refusing to run against the real ~/.hermes profile.", file=sys.stderr)
         sys.exit(1)
 

@@ -22,7 +22,6 @@
       "row": 0,
       "count": 6,
       "source": "atlas_full.png",
-      "source_row": 0,
       "hashes": [
         "ebf1855e47aae964",
         "677c72e55c31afdb",
@@ -38,7 +37,6 @@
       "row": 1,
       "count": 8,
       "source": "running-right_row_atlas_fragment.png",
-      "source_row": 1,
       "hashes": [
         "931b89c80241ac0c",
         "219b34bde37811c5",
@@ -56,7 +54,6 @@
       "row": 2,
       "count": 8,
       "source": "running-left_row_atlas_fragment.png",
-      "source_row": 2,
       "hashes": [
         "66a4efff9e43dac7",
         "e48faf9d240f1a82",
@@ -74,7 +71,6 @@
       "row": 3,
       "count": 4,
       "source": "waving_row_atlas_fragment.png",
-      "source_row": 3,
       "hashes": [
         "00a8655454319163",
         "3780b1da4b1b5c05",
@@ -88,7 +84,6 @@
       "row": 4,
       "count": 5,
       "source": "jumping_row_atlas_fragment.png",
-      "source_row": 4,
       "hashes": [
         "6b29aab6a1a64086",
         "330e2082e1f6c833",
@@ -103,7 +98,6 @@
       "row": 5,
       "count": 8,
       "source": "failed_row_atlas_fragment.png",
-      "source_row": 5,
       "hashes": [
         "88756f92b416e19a",
         "b019552be7f98fbc",
@@ -121,7 +115,6 @@
       "row": 6,
       "count": 6,
       "source": "waiting_row_atlas_fragment.png",
-      "source_row": 6,
       "hashes": [
         "d20da4762b777bd7",
         "8e68447ef865b50f",
@@ -137,7 +130,6 @@
       "row": 7,
       "count": 6,
       "source": "atlas_full.png",
-      "source_row": 7,
       "hashes": [
         "88b865b6dc608e79",
         "89656393f19a72f2",
@@ -153,7 +145,6 @@
       "row": 8,
       "count": 6,
       "source": "review_row_atlas_fragment.png",
-      "source_row": 8,
       "hashes": [
         "fd6e4f6455889d04",
         "e1479549f5bf67b3",
@@ -167,5 +158,6 @@
     }
   },
   "all_rows_unique": true,
+  "cross_state_collision_check": "passed",
   "states_filled": 9
 }
