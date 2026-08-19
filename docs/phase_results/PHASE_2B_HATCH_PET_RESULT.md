@@ -1427,6 +1427,13 @@ this gate's approval, all real-pose row generation work for this phase is
 complete. PR opened against `phase2b-pose-sequence-wave` (this branch's
 base).
 
+**Superseded by addendum #8 below**: the human resolved the left-facing
+caveat by relabeling this row as `running-left` (it already faces left) and
+deriving `running-right` as its horizontal mirror, at zero additional API
+cost. The files this addendum lists under the `running-right_*` prefix were
+then overwritten by addendum #8's mirror derivation — see that addendum for
+the current, correct content.
+
 ### Files changed (addendum #7)
 
 - `scripts/generate_running_right_sequence.py` (new — thin `running-right`
@@ -1439,5 +1446,202 @@ base).
 - `assets/keyframes/running-right_row_contact_sheet.png` (new).
 - `assets/keyframes/running-right_row_preview.gif` (new).
 - `assets/keyframes/running-right_row_report.json` (new).
+- `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
+- `docs/08_PROJECT_STATE.md` (updated).
+
+## Addendum #8 — relabel `running-right` → `running-left`, derive `running-right` as its mirror — 9/9 states DONE
+
+### Why
+
+Addendum #7's 3 generated poses came out left-facing despite every
+`ACTION_DESCRIPTIONS` prompt explicitly asking for rightward-facing stride
+poses ("facing and moving toward the right side of the frame") — flagged as
+a visual caveat at the time, not retried per the one-call-per-pose budget.
+
+Rather than spend more real OpenRouter budget retrying the generation, the
+human's decision was **zero-cost relabeling**: the row addendum #7 built
+already IS a correct, validated, visually-distinct 3-pose stride cycle — it
+is simply facing the opposite direction from what its filename said. So:
+
+1. The already-generated, already-validated row (poses + ping-pong + wobble,
+   unchanged pixels) is now labeled `running-left` instead of
+   `running-right` — it already faces left, so no rework needed.
+2. `running-right` is derived as a **horizontal mirror** of that same row,
+   using Hermes's own `atlas.mirror_frames()` (unmodified,
+   `agent/pet/generate/atlas.py`) — the exact primitive
+   `phase-4-full-atlas` used to derive `running-left` FROM `running-right`
+   (`scripts/full_atlas.py`'s `derive_running_left()`, commit `7353a27`).
+   This addendum runs that same mechanism in the *reverse* direction: here
+   the real generated row is the left-facing one, so it's the mirror
+   *source*, and `running-right` is the mirror *output* — the opposite of
+   every prior convention in this project (Phase 4's `full_atlas.py` and
+   `hatch_pet()` itself both always treat `running-right` as primary and
+   mirror it to get `running-left`). Flagging that reversal explicitly here
+   since it's a deliberate, one-off exception to that convention, not a new
+   default.
+
+**Zero new `generate()` calls.** This addendum is pure deterministic image
+processing (Pillow flip via Hermes's own primitive) plus Hermes's own real
+`atlas.validate_atlas()` — no network, no `HERMES_HOME` needed at all for
+either script.
+
+### Implementation
+
+- `scripts/state_row.py` refactored (no behavior change for existing
+  callers): the pose-loading/ping-pong/wobble step is now the public
+  `load_and_arrange()`, and the hash/compose/validate/write step is now
+  `_finalize_row()`. `build_state_row()` is unchanged from the caller's
+  perspective (thin wrapper over both). New `build_mirrored_row()` calls
+  `atlas.mirror_frames()` on an already-arranged frame list and reuses
+  `_finalize_row()` — so a mirrored row gets the exact same
+  hashing/atlas-compose/`validate_atlas()`/contact-sheet/GIF/report
+  pipeline as a directly-generated one, no special-casing downstream.
+- `scripts/build_running_left_row.py` (new) — `STATE = "running-left"`,
+  same 3 processed pose files as addendum #7 (filenames keep their
+  `running-right_pose{1,2,3}.png` names — that's the state the generation
+  prompts actually targeted; renaming them would obscure that history).
+  Calls `build_state_row("running-left", POSE_FILES, 8)` unchanged.
+- `scripts/build_running_right_row.py` (rewritten) — re-derives
+  `running-left`'s arranged 8 frames via `load_and_arrange()` (deterministic,
+  same pixels as addendum #7's original run), mirrors them with
+  `atlas.mirror_frames()`, and finalizes as `running-right` via
+  `build_mirrored_row()`.
+- `scripts/generate_running_right_sequence.py` — left unchanged (it's the
+  accurate historical record of the actual API calls: 3 real
+  `generate()` calls, each prompted for a rightward-facing pose). A
+  docstring note was added pointing to this addendum's outcome; no prompt
+  text or logic changed.
+
+### Frame hashes
+
+`running-left` (real poses, ping-pong `[0,1,2,2,1,0,0,1]`, unchanged from
+addendum #7's `running-right` run):
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 | `66a4efff9e43dac7` |
+| 1 | pose 2 | `e48faf9d240f1a82` |
+| 2 | pose 3 | `47f3603eae80713c` |
+| 3 | pose 3 | `f305977021e0e636` |
+| 4 | pose 2 | `0567bd6f6433cfb1` |
+| 5 | pose 1 | `ff666d96621c61a4` |
+| 6 | pose 1 | `e08a8d555c820d09` |
+| 7 | pose 2 | `2d42602357e5db7b` |
+
+**8/8 unique.**
+
+`running-right` (horizontal mirror of the row above, same order/timing):
+
+| col | pose | sha256[:16] |
+|---|---|---|
+| 0 | pose 1 | `931b89c80241ac0c` |
+| 1 | pose 2 | `219b34bde37811c5` |
+| 2 | pose 3 | `5fb4c87f2b011a20` |
+| 3 | pose 3 | `2364b8c4efd6c783` |
+| 4 | pose 2 | `cb9eeba612e9fdfd` |
+| 5 | pose 1 | `e3a8385067718986` |
+| 6 | pose 1 | `b850b8c8673616e7` |
+| 7 | pose 2 | `d9b1ffe5f714ed65` |
+
+**8/8 unique.** All 16 hashes across both rows are pairwise distinct too
+(mirroring changes every pixel row, so no collision with the source).
+
+### Validation
+
+Two independent full-size (1536x1872) atlas images, each via
+`atlas.compose_atlas({state: frames})` with only that one row filled.
+Hermes's real, unmodified `atlas.validate_atlas()` on both:
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": ["... 8 other states have no frames (expected, single-row fragment) ..."],
+  "filled_states": ["running-left"]
+}
+```
+
+```json
+{
+  "ok": true,
+  "width": 1536,
+  "height": 1872,
+  "errors": [],
+  "warnings": ["... 8 other states have no frames (expected, single-row fragment) ..."],
+  "filled_states": ["running-right"]
+}
+```
+
+`ok: true`, zero errors, both rows.
+
+### Visual gate evidence
+
+- `assets/keyframes/running-left_row_contact_sheet.png` and
+  `assets/keyframes/running-right_row_contact_sheet.png` — all 8 frames
+  each, labeled `col{i}: pose{N}`, **sent to the user via SendUserFile**.
+- `assets/keyframes/running-left_row_preview.gif` and
+  `assets/keyframes/running-right_row_preview.gif` — looping animated
+  previews (280ms/frame, upscaled 3x), **sent to the user via
+  SendUserFile**.
+- Visual check on both contact sheets confirms the mirror is correct: the
+  `running-left` row's snout/stride face left, the `running-right` row's
+  face right — opposite facings, same pose progression and timing.
+- `assets/keyframes/{running-left,running-right}_row_atlas_fragment.png` —
+  full-size atlas images used for each `validate_atlas()` call.
+- `assets/keyframes/{running-left,running-right}_row_report.json` — row
+  order, all 8 hashes, full `validate_atlas()` output, file paths;
+  `running-right`'s report additionally records `"mirrored_from":
+  "running-left"`.
+
+### Cost
+
+**$0.00.** Zero `generate()` calls this addendum — pure Pillow
+image-processing reuse of addendum #7's already-paid-for poses
+(addendum #7's own $0.2813 already covers the only generation spend
+involved).
+
+### Safety verification
+
+- Neither script touches `HERMES_HOME` — both are pure image processing
+  (`state_row.py`'s `load_and_arrange`/`build_mirrored_row`/
+  `_finalize_row`, `atlas.mirror_frames`/`compose_atlas`/`validate_atlas`),
+  same as every prior `build_*_row.py` script in this project.
+- Real `~/.hermes/config.yaml` and `~/.hermes/pets/`: not touched by this
+  addendum (no code path in either script reads or writes outside this
+  repo's `assets/keyframes/`).
+
+### Decision
+
+**Addendum #8 done.** With `running-left` and `running-right` both real,
+validated, and correctly labeled, **all 9 of the 9 Hermes pet states for
+Phase 2B are now complete**: `idle`, `run`(ning, working state), `jumping`
+(Phase 4 single-pose `_vary()` method) + `review`, `waiting`, `failed`,
+`waving`, `running-right`, `running-left` (this Phase 2B real-pose-sequence
+method, addenda #1-#8). Awaiting the human's visual gate on all rows still
+pending approval (see `docs/08_PROJECT_STATE.md`'s Active objective) plus
+this addendum's `running-left`/`running-right` mirror correctness. PR #8
+(same PR as addendum #7) updated with this addendum's commit.
+
+### Files changed (addendum #8)
+
+- `scripts/state_row.py` (refactored — `load_and_arrange()` /
+  `_finalize_row()` split out of `build_state_row()`; new
+  `build_mirrored_row()`).
+- `scripts/build_running_left_row.py` (new — thin `running-left` runner).
+- `scripts/build_running_right_row.py` (rewritten — now derives via mirror,
+  not direct pose loading).
+- `scripts/generate_running_right_sequence.py` (docstring note only — no
+  prompt/logic change).
+- `assets/keyframes/running-left_row_atlas_fragment.png` (new).
+- `assets/keyframes/running-left_row_contact_sheet.png` (new).
+- `assets/keyframes/running-left_row_preview.gif` (new).
+- `assets/keyframes/running-left_row_report.json` (new).
+- `assets/keyframes/running-right_row_atlas_fragment.png` (overwritten —
+  now the mirrored, correct content).
+- `assets/keyframes/running-right_row_contact_sheet.png` (overwritten).
+- `assets/keyframes/running-right_row_preview.gif` (overwritten).
+- `assets/keyframes/running-right_row_report.json` (overwritten).
 - `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` (this addendum).
 - `docs/08_PROJECT_STATE.md` (updated).

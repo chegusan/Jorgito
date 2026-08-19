@@ -8,6 +8,13 @@ across the row's frame count, applies the Phase 4 deterministic wobble on
 top of each so pose-sharing columns still hash-distinct, and validates with
 Hermes's real ``atlas.validate_atlas()``.
 
+Addendum #8 adds ``build_mirrored_row``, which derives one state's row as a
+horizontal mirror of another's already-built row via Hermes's own
+``atlas.mirror_frames()`` -- zero new generation, used to derive
+``running-right`` from the real, approved ``running-left`` row (see
+``build_running_right_row.py`` and the addendum in
+``docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md``).
+
 Pure Pillow image processing -- no network, no ``HERMES_HOME``.
 """
 
@@ -141,19 +148,16 @@ def _gif_frames(frames: list, scale: int = 3):
     return rgb_frames
 
 
-def build_state_row(state: str, poses: list[Path], row_frame_count: int) -> dict:
-    """Assemble *state*'s full row from *poses* (processed cell images).
+def load_and_arrange(poses: list[Path], row_frame_count: int) -> tuple[list, list[int]]:
+    """Load *poses* (processed cell images), ping-pong + wobble them into a full row.
 
-    Ping-pongs the real poses across ``row_frame_count`` columns
-    (``_pingpong_order``), applies the Phase 4 ``_vary()`` wobble on top of
-    every column, composes a full-atlas-shaped image with only *state*'s row
-    filled, and validates it with Hermes's real, unmodified
-    ``atlas.validate_atlas()``. Writes the atlas fragment, labeled contact
-    sheet, looping GIF, and a report JSON under ``assets/keyframes/``. Pure
-    image processing -- no network, no ``HERMES_HOME``. Returns the report
-    dict (also written to ``assets/keyframes/{state}_row_report.json``).
+    Pure, deterministic (``_pingpong_order`` + ``_vary``) -- calling this
+    twice on the same inputs reproduces byte-identical frames. Split out of
+    ``build_state_row`` so a row's already-arranged frames can be reused as
+    the input to ``build_mirrored_row`` (e.g. deriving ``running-right`` from
+    ``running-left``) without re-running generation or duplicating the
+    arrange logic.
     """
-    from agent.pet.generate import atlas
     from PIL import Image
 
     for path in poses:
@@ -167,6 +171,28 @@ def build_state_row(state: str, poses: list[Path], row_frame_count: int) -> dict
 
     row_pose_order = _pingpong_order(len(poses), row_frame_count)
     frames = [_vary(loaded[pose_idx], i, row_frame_count) for i, pose_idx in enumerate(row_pose_order)]
+    return frames, row_pose_order
+
+
+def _finalize_row(
+    state: str,
+    frames: list,
+    row_pose_order: list[int],
+    *,
+    pose_files: list[Path] | None = None,
+    mirrored_from: str | None = None,
+) -> dict:
+    """Hash, compose, validate, and write out the artifacts for *state*'s row.
+
+    Shared tail end of ``build_state_row`` and ``build_mirrored_row`` --
+    composes a full-atlas-shaped image with only *state*'s row filled and
+    validates it with Hermes's real, unmodified ``atlas.validate_atlas()``.
+    Writes the atlas fragment, labeled contact sheet, looping GIF, and a
+    report JSON under ``assets/keyframes/``. Pure image processing -- no
+    network, no ``HERMES_HOME``. Returns the report dict (also written to
+    ``assets/keyframes/{state}_row_report.json``).
+    """
+    from agent.pet.generate import atlas
 
     hashes = [hashlib.sha256(f.tobytes()).hexdigest()[:16] for f in frames]
     unique = len(set(hashes))
@@ -201,9 +227,8 @@ def build_state_row(state: str, poses: list[Path], row_frame_count: int) -> dict
 
     report = {
         "state": state,
-        "row_count": row_frame_count,
+        "row_count": len(frames),
         "row_pose_order": row_pose_order,
-        "pose_files": [str(p) for p in poses],
         "frame_hashes": hashes,
         "unique_hash_count": unique,
         "validate_atlas": validation,
@@ -211,6 +236,10 @@ def build_state_row(state: str, poses: list[Path], row_frame_count: int) -> dict
         "contact_sheet_path": str(contact_path),
         "gif_path": str(gif_path),
     }
+    if pose_files is not None:
+        report["pose_files"] = [str(p) for p in pose_files]
+    if mirrored_from is not None:
+        report["mirrored_from"] = mirrored_from
     report_path = KEYFRAMES_DIR / f"{state}_row_report.json"
     report_path.write_text(json.dumps(report, indent=2))
     print(f"-> {report_path}")
@@ -221,3 +250,34 @@ def build_state_row(state: str, poses: list[Path], row_frame_count: int) -> dict
         print("\nERROR: validate_atlas() reported errors.", file=sys.stderr)
 
     return report
+
+
+def build_state_row(state: str, poses: list[Path], row_frame_count: int) -> dict:
+    """Assemble *state*'s full row from *poses* (processed cell images).
+
+    Thin wrapper: ``load_and_arrange`` (ping-pong + wobble) followed by
+    ``_finalize_row`` (hash/compose/validate/write). See both docstrings.
+    """
+    frames, row_pose_order = load_and_arrange(poses, row_frame_count)
+    return _finalize_row(state, frames, row_pose_order, pose_files=poses)
+
+
+def build_mirrored_row(target_state: str, source_frames: list, source_row_pose_order: list[int], source_state: str) -> dict:
+    """Derive *target_state*'s row as a horizontal mirror of *source_frames*.
+
+    Uses Hermes's own, unmodified ``atlas.mirror_frames()`` -- the same
+    primitive ``phase-4-full-atlas`` used to derive ``running-left`` from an
+    approved ``running-right`` row, applied here in the reverse direction
+    (see ``docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`` addendum #8 for
+    why: the real generated poses rendered left-facing despite a
+    right-facing prompt, so the approved source row is ``running-left`` and
+    ``running-right`` is the derived mirror instead of the other way
+    around). ``mirror_frames`` flips per-frame, preserving *source_frames*'
+    order/timing -- not a whole-strip reverse. Reuses
+    *source_row_pose_order* for column labeling since mirroring doesn't
+    change which pose a column represents, only its facing.
+    """
+    from agent.pet.generate import atlas
+
+    mirrored = atlas.mirror_frames(source_frames)
+    return _finalize_row(target_state, mirrored, source_row_pose_order, mirrored_from=source_state)

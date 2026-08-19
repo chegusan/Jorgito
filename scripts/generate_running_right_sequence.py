@@ -13,6 +13,18 @@ variation on one pose (learned from ``waiting``'s near-miss).
 ONLY ever run against the isolated HERMES_HOME test profile -- same
 refusal guard as the rest of this project's Phase 2B scripts.
 
+Addendum #8 note: despite every ``ACTION_DESCRIPTIONS`` prompt below asking
+for rightward-facing poses, the model rendered all 3 leftward-facing
+(addendum #7's visual caveat). The human's zero-cost decision was to keep
+these real, already-paid-for poses and relabel the row they build as
+``running-left`` instead of retrying -- see
+``scripts/build_running_left_row.py`` and
+``scripts/build_running_right_row.py`` (which now derives ``running-right``
+as a horizontal mirror of the ``running-left`` row via Hermes's
+``atlas.mirror_frames()``). This file is left unchanged as the accurate
+historical record of what was actually generated and requested; only the
+row assembly downstream was relabeled.
+
 Usage:
     /home/chegusan/.hermes/hermes-agent/venv/bin/python3 \\
         scripts/generate_running_right_sequence.py

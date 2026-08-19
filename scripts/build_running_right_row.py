@@ -1,10 +1,25 @@
-"""Thin per-state runner: assemble the real ``running-right`` row.
+"""Thin per-state runner: derive the ``running-right`` row as a mirror.
 
-Config-only wrapper around the generalized ``scripts/state_row.build_state_row``
-(see that module's docstring for the ping-pong/wobble/validation logic).
-Pure image processing -- no network, no ``HERMES_HOME`` -- run after
-``scripts/generate_running_right_sequence.py`` has produced the 3 processed
-poses.
+Addendum #8: the real generated pose-sequence poses rendered LEFTWARD-facing
+despite a rightward-facing prompt (Phase 2B addendum #7's visual caveat), so
+the human decided (zero-cost) to relabel that already-generated, already-
+validated row as ``running-left`` (see ``scripts/build_running_left_row.py``)
+and derive ``running-right`` from it as a horizontal mirror instead of
+spending more API budget on a retry.
+
+Uses Hermes's own, unmodified ``atlas.mirror_frames()`` -- the same
+primitive ``phase-4-full-atlas`` used to derive ``running-left`` from an
+approved ``running-right`` row, applied here in the reverse direction (see
+``scripts/state_row.build_mirrored_row``'s docstring). NOT a whole-strip
+reverse: each of the 8 frames is flipped in place, so ``running-right``
+plays back with the exact same frame order/timing as ``running-left``, just
+facing the other way.
+
+Pure image processing -- no network, no ``HERMES_HOME``, ZERO new
+``generate()`` calls. Re-derives ``running-left``'s arranged frames via
+``state_row.load_and_arrange`` (deterministic -- same inputs, same pixels)
+rather than re-reading them off disk, so this script is runnable
+standalone.
 
 Usage:
     /home/chegusan/.hermes/hermes-agent/venv/bin/python3 \\
@@ -13,32 +28,16 @@ Usage:
 
 from __future__ import annotations
 
-from pose_sequence import PROCESSED_DIR
-from state_row import build_state_row
+from build_running_left_row import POSE_FILES, ROW_FRAME_COUNT
+from state_row import build_mirrored_row, load_and_arrange
 
 STATE = "running-right"
-ROW_FRAME_COUNT = 8  # atlas.FRAME_COUNTS["running-right"], per Hermes's real ROW_SPECS
-# NOTE: the real state key is "running-right" (row 1, 8 frames) per
-# atlas.ROW_SPECS -- confirmed by reading
-# /home/chegusan/.hermes/hermes-agent/agent/pet/generate/atlas.py directly
-# rather than assumed, per this project's established gotcha (jumping's and
-# waving's real key/count also differed from a naive guess). "running" (row
-# 7, 6 frames) is a different, unrelated state (in-place working/digging
-# pose) -- not to be confused with this one.
-
-# The 3 real generated poses, in stride-progression order: pose 1 right-leg
-# forward / left-leg back, pose 2 compact mid-air passing position, pose 3
-# left-leg forward / right-leg back (mirror of pose 1) -- see
-# scripts/generate_running_right_sequence.py.
-POSE_FILES = [
-    PROCESSED_DIR / "running-right_pose1.png",
-    PROCESSED_DIR / "running-right_pose2.png",
-    PROCESSED_DIR / "running-right_pose3.png",
-]
+SOURCE_STATE = "running-left"
 
 
 def main() -> None:
-    build_state_row(STATE, POSE_FILES, ROW_FRAME_COUNT)
+    frames, row_pose_order = load_and_arrange(POSE_FILES, ROW_FRAME_COUNT)
+    build_mirrored_row(STATE, frames, row_pose_order, SOURCE_STATE)
 
 
 if __name__ == "__main__":

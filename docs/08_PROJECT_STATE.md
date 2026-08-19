@@ -120,24 +120,49 @@ keyframes.
   guardrails). Branch `phase2b-pose-sequence-wave`, PR opened against
   `phase2b-fix-failed-chromakey`. See the addendum in
   `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
+- Phase 2B addendum #7 — **`running-right` row, DONE, awaiting human visual
+  gate.** Same generalized pattern applied to `running-right` (real key/
+  count confirmed from `atlas.ROW_SPECS`: `("running-right", 1, 8)`).
+  3 real chained stride poses, `validate_atlas()` `ok: true`, 8/8 unique
+  hashes. **$0.2813** for 3 new API calls. **Caveat:** all 3 poses rendered
+  LEFT-facing despite every prompt explicitly asking for a rightward-facing
+  stride. Branch `phase2b-pose-sequence-running-right`, PR #8 opened
+  against `phase2b-pose-sequence-wave`. **Superseded by addendum #8** (see
+  below) — the caveat above was resolved by relabeling, not a retry.
+- Phase 2B addendum #8 — **relabel `running-right`→`running-left` + derive
+  `running-right` as its mirror, DONE, awaiting human visual gate.**
+  Zero-cost fix for addendum #7's left-facing caveat: instead of
+  re-spending API budget on a retry, the human relabeled addendum #7's
+  already-generated, already-validated row as `running-left` (it already
+  faces left) and derived `running-right` as its horizontal mirror using
+  Hermes's own `atlas.mirror_frames()` (same primitive `phase-4-full-atlas`
+  used, direction reversed). **$0.00** — zero new `generate()` calls, pure
+  Pillow + Hermes's real `validate_atlas()`. Both rows: `ok: true`, 8/8
+  unique hashes each, all 16 hashes pairwise distinct. Visual-gate evidence
+  for both rows sent to the user
+  (`assets/keyframes/{running-left,running-right}_row_contact_sheet.png` /
+  `_row_preview.gif`). Same branch/PR #8 as addendum #7. See the addendum in
+  `docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
 
 ## Active objective
 
-Waiting on the user's visual-gate judgment on addendum #3's `waiting` row,
-addendum #4/#5's `failed` row, AND addendum #6's `waving` row
-(`assets/keyframes/{waiting,failed,waving}_row_contact_sheet.png` /
-`{waiting,failed,waving}_row_preview.gif`) before running the remaining 2
-states (`jumping`, `running`) with this same pattern. `failed`'s
-shadow-patch caveat is resolved (addendum #5, zero-cost deterministic
-reprocessing); `waving`'s only caveat is pose 3's weaker side-to-side read
-(still visually distinct, see addendum #6) — each row's remaining question
-for the human gate is pose-quality/identity, same as every other row. If
-rejected outright, or as a broader decision, fall back to Phase 2B's
-original 4 options (retry same model, try a different
+**All 9 Hermes pet states now have real content** (`idle`, `run`, `review`,
+`waiting`, `failed`, `jumping`, `waving`, `running-right`, `running-left` —
+per the user's confirmation after addendum #8). Waiting on the user's
+visual-gate judgment across every row still pending approval: addendum #3's
+`waiting`, addendum #4/#5's `failed`, addendum #6's `waving`, and addendum
+#7/#8's `running-left`/`running-right` pair
+(`assets/keyframes/{waiting,failed,waving,running-left,running-right}_row_contact_sheet.png`
+/ `..._row_preview.gif`). `failed`'s shadow-patch caveat is resolved
+(addendum #5); `waving`'s only caveat is pose 3's weaker side-to-side read
+(addendum #6); `running-right`'s left-facing caveat is resolved by
+relabeling + mirroring, not a retry (addendum #8) — each row's remaining
+question for the human gate is pose-quality/identity, same as every other
+row. If any row is rejected outright, or as a broader decision, fall back
+to Phase 2B's original 4 options (retry same model, try a different
 `OPENROUTER_IMAGE_MODEL`, abandon Path A and keep Phase 3/4's Camino B as
 final, or tighten the row-strip prompt) — see
-`docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`. Not proceeding to the
-remaining 2 states automatically given real per-call cost.
+`docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
 
 ## Confirmed decisions
 
@@ -183,6 +208,11 @@ remaining 2 states automatically given real per-call cost.
 Phase 3/4 (Camino B, full 8-state atlas via deterministic `_vary()`
 transform) already completed end-to-end on branch `phase-4-full-atlas` —
 see `docs/phase_results/PHASE_4_RESULT.md` on that branch. That work is
-unaffected by Phase 2B. Current blocker is Phase 2B: waiting on the user to
-choose one of its 4 options before any further `hatch_pet()` spend — see
-`docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md`.
+unaffected by Phase 2B.
+
+Phase 2B's real-pose-sequence track (addenda #1-#8) now has real content
+for all 9 Hermes pet states (see "Active objective" above) — current
+blocker is the human's visual gate across every row still pending approval,
+not further generation spend. See
+`docs/phase_results/PHASE_2B_HATCH_PET_RESULT.md` for per-row evidence and
+caveats.
