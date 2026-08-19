@@ -1,0 +1,13 @@
+# Pin the lint rule set so CI matches local runs regardless of ruff's
+# default-select changing across versions.
+#
+# This mirrors ruff's historical default (pyflakes + a safe pycodestyle
+# subset) and deliberately does NOT enable:
+#   - I     (import sorting): each pipeline script must insert the Hermes
+#           source onto sys.path BEFORE importing `agent.pet.*`, so imports are
+#           intentionally placed and carry `# noqa: E402`; isort would fight it.
+#   - E501  (line length): long descriptive docstrings/comments are acceptable.
+target-version = "py311"
+
+[lint]
+select = ["E4", "E7", "E9", "F"]
