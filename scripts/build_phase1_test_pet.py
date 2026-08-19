@@ -19,21 +19,22 @@ whatever ``HERMES_HOME`` this process sees. This script sets no HERMES_HOME
 itself — the caller MUST export ``HERMES_HOME`` to the isolated test profile
 before running it, so it never touches the real ``~/.hermes``.
 
-Usage:
-    HERMES_HOME=/home/chegusan/.hermes-jorgito-test \\
-        /home/chegusan/.hermes/hermes-agent/venv/bin/python3 \\
-        scripts/build_phase1_test_pet.py
+Usage (HERMES_AGENT_SRC overrides the Hermes source location; see
+scripts/hermes_env.py):
+    HERMES_HOME=/path/to/isolated-profile \\
+        HERMES_AGENT_SRC=/path/to/hermes-agent \\
+        /path/to/hermes-agent/venv/bin/python3 scripts/build_phase1_test_pet.py
 """
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
-HERMES_SRC = Path("/home/chegusan/.hermes/hermes-agent")
-if str(HERMES_SRC) not in sys.path:
-    sys.path.insert(0, str(HERMES_SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hermes_env import ensure_hermes_on_path, require_isolated_hermes_home  # noqa: E402
+
+ensure_hermes_on_path()
 
 from PIL import Image  # noqa: E402
 
@@ -70,13 +71,7 @@ def build_sheet() -> Image.Image:
 
 
 def main() -> None:
-    hermes_home = os.environ.get("HERMES_HOME", "").strip()
-    if not hermes_home:
-        print("ERROR: HERMES_HOME must be set to the isolated test profile before running this.", file=sys.stderr)
-        sys.exit(1)
-    if Path(hermes_home).resolve() == Path.home().resolve() / ".hermes":
-        print("ERROR: refusing to run against the real ~/.hermes profile.", file=sys.stderr)
-        sys.exit(1)
+    hermes_home = require_isolated_hermes_home()
 
     print(f"HERMES_HOME={hermes_home}")
     sheet = build_sheet()

@@ -26,9 +26,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-HERMES_SRC = Path("/home/chegusan/.hermes/hermes-agent")
-if str(HERMES_SRC) not in sys.path:
-    sys.path.insert(0, str(HERMES_SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hermes_env import ensure_hermes_on_path  # noqa: E402
+
+ensure_hermes_on_path()
 
 from agent.pet.generate import atlas  # noqa: E402
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
