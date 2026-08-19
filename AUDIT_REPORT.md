@@ -87,11 +87,16 @@ Severity uses the brief's own P0–P3 scale, applied honestly to this codebase.
 | F-4 | 🟡 **P2** | Zero tests despite `docs/06_TEST_PLAN.md`; the deterministic transforms are the *most* testable code here | whole repo | **Fixed** — `tests/` (24 tests) + CI added |
 | F-5 | 🟢 **P3** | Filename hygiene / dead import (`Jorgito  Plan.md` double space, unused `Path` import) | root, `scripts/` | **Fixed** — renamed + import removed |
 | F-6 | 🟢 **P3** | `full_atlas._vary` frame-distinctness is cell-size-dependent (verified fine on real 192×208 cells) | `full_atlas.py` | Verified OK — regression-tested |
+| F-7 | 🟠 **P1** | The `require_isolated_hermes_home()` safety guard consolidated for F-2 was bypassable: symlinked `~/.hermes` (round 1), and `HERMES_HOME` pointing at a subdirectory of the real profile (round 2) | `scripts/hermes_env.py` | **Fixed** — both closed, 3 regression tests added, verified end-to-end on a Hermes-equipped machine (§9) |
 | N/A | — | Brief items with no counterpart here (state engine, IndexedDB, Zustand, Web Workers, 60fps, Tailwind, ESLint) | — | Not applicable |
 
-**No P0 (blocker) findings.** No data-loss race, no crash, no security hole, no
-broken architecture. The isolated-profile guards specifically prevent the one
-destructive failure mode (clobbering the real `~/.hermes`). All 11 scripts
+**No P0 (blocker) findings.** No data-loss race, no crash, no broken
+architecture. F-7 *was* a genuine, exploitable safety-guard bypass (see §9) —
+found post-consolidation and fixed in this branch, not left open — so "no
+security hole" only holds as of the current state of this branch, not the
+version of `hermes_env.py` originally proposed for F-2. The isolated-profile
+guards, now hardened, specifically prevent the one destructive failure mode
+(clobbering the real `~/.hermes`). All 11 scripts
 **byte-compile cleanly** (`python -m py_compile`, verified).
 
 ---
@@ -335,3 +340,77 @@ their PNG output compared before/after.
 > exercising the extracted `hermes_env` logic directly, and line-by-line review
 > that each rewired header preserves the original import surface. A run on a
 > Hermes-equipped machine remains the final confirmation for the entrypoints.
+
+---
+
+## 9. Fix — `require_isolated_hermes_home()` was consolidated but still bypassable
+
+Independent of this report's own scope, a separate, unrelated PR
+(`phase-final-atlas-integration`, #9 — a content-reconciliation branch that
+never touches these Phase-1/3/4 scripts) went through **two rounds of
+independent cross-review** that found real bypasses in the exact same
+"refuse to run against the real `~/.hermes`" guard this report centralized
+in §8. Verifying this report on a Hermes-equipped machine (this one) surfaced
+that the consolidation here (F-2) fixed the *duplication* but carried the
+*bug* forward unchanged into the new single owner — which is actually worse
+than before, since now all 8 rewired scripts share the one unfixed copy
+instead of 4 duplicated ones.
+
+**Bug 1 — unresolved RHS lets a symlinked `~/.hermes` bypass the guard.** The
+original comparison,
+
+```python
+Path(hermes_home).resolve() == Path.home().resolve() / ".hermes"
+```
+
+only resolves `Path.home()`, not the `.hermes` component appended after it.
+`Path(hermes_home).resolve()` on the left always follows any symlink in
+`hermes_home` itself, so if the user's real `~/.hermes` is ever a symlink (a
+common dotfile-manager setup, e.g. stow/chezmoi pointing it at a managed
+target directory), the two sides never compare equal and the guard silently
+lets the script run against the real profile's data — whether the caller
+passes the symlink path directly or its resolved target.
+
+**Bug 2 — even after resolving both sides, a strict `==` misses
+subdirectories.** Fixing bug 1 by resolving the RHS too closes the symlink
+gap, but the comparison is still exact equality, so `HERMES_HOME` pointing
+at a *subdirectory* of the real `~/.hermes` (e.g. `~/.hermes/pets`, or a
+symlink resolving to one) is not caught either — the script would then write
+within the real profile's data (e.g. `~/.hermes/pets/pets/`).
+
+**Fix applied** in `scripts/hermes_env.py`'s `require_isolated_hermes_home()`
+(the single owner all 8 scripts now import — one fix covers all of them):
+
+```python
+hermes_resolved = Path(hermes_home).resolve()
+real_hermes = (Path.home() / ".hermes").resolve()
+if hermes_resolved == real_hermes or real_hermes in hermes_resolved.parents:
+    print("ERROR: refusing to run against or within the real ~/.hermes profile.", file=sys.stderr)
+    sys.exit(1)
+```
+
+**Verification, on this Hermes-equipped machine** — closing this report's
+own previously-open item ("a run on a Hermes-equipped machine remains the
+final confirmation"):
+
+- `tests/test_hermes_env.py` extended with 3 new regression tests
+  (symlinked-real-profile, subdirectory-of-real-profile via both the
+  symlink path and its resolved target, and a no-false-positive check with a
+  symlinked `~/.hermes`). **35/35 tests pass**, `ruff check` clean,
+  `py_compile` clean on all scripts.
+- Ran `install_full_atlas_pet.py` (importing the fixed guard) for real
+  against a throwaway isolated `HERMES_HOME` — succeeds exactly as before
+  (`validate_atlas() ok=True`, all 9 states filled, pet registered).
+- Ran it again with `HERMES_HOME=/home/chegusan/.hermes` (the real profile)
+  and with `HERMES_HOME=/home/chegusan/.hermes/pets` (a subdirectory of it)
+  — both now correctly rejected: `ERROR: refusing to run against or within
+  the real ~/.hermes profile.`
+- Real `~/.hermes` verified untouched throughout (`config.yaml` md5
+  unchanged, `pets/` still empty).
+
+**Takeaway for future consolidation work:** centralizing duplicated logic
+(F-2's own recommendation) is necessary but not sufficient when the
+duplicated logic is *safety* code — the consolidation should be paired with
+adversarial review of the safety property itself, not just a mechanical
+extract. Two review passes were needed here to find both bypasses; a single
+pass would likely have shipped bug 2 even after "fixing" bug 1.
