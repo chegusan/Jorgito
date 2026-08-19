@@ -1,0 +1,48 @@
+{
+  "state": "review",
+  "row_count": 6,
+  "row_pose_order": [
+    0,
+    1,
+    2,
+    2,
+    1,
+    0
+  ],
+  "pose_files": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/review_singlepose_pilot.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/review_pose2_midturn.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/processed/review_pose3_turned.png"
+  ],
+  "frame_hashes": [
+    "fd6e4f6455889d04",
+    "e1479549f5bf67b3",
+    "ebd74364db9e3ff6",
+    "e91911268077781b",
+    "8bf546ebff5d0e11",
+    "3bc84d95348d49fe"
+  ],
+  "unique_hash_count": 6,
+  "validate_atlas": {
+    "ok": true,
+    "width": 1536,
+    "height": 1872,
+    "errors": [],
+    "warnings": [
+      "state 'idle' has no frames",
+      "state 'running-right' has no frames",
+      "state 'running-left' has no frames",
+      "state 'waving' has no frames",
+      "state 'jumping' has no frames",
+      "state 'failed' has no frames",
+      "state 'waiting' has no frames",
+      "state 'running' has no frames"
+    ],
+    "filled_states": [
+      "review"
+    ]
+  },
+  "atlas_fragment_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/review_row_atlas_fragment.png",
+  "contact_sheet_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/review_row_contact_sheet.png",
+  "gif_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-hatch-pet-regen/assets/keyframes/review_row_preview.gif"
+}

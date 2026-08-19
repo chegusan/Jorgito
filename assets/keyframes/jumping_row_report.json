@@ -1,0 +1,46 @@
+{
+  "state": "jumping",
+  "row_count": 5,
+  "row_pose_order": [
+    0,
+    1,
+    2,
+    2,
+    1
+  ],
+  "pose_files": [
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose1.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose2.png",
+    "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/processed/jumping_pose3.png"
+  ],
+  "frame_hashes": [
+    "6b29aab6a1a64086",
+    "330e2082e1f6c833",
+    "6132db1437cd8b6e",
+    "b35ef0eaef366846",
+    "7dc397020e1b42f6"
+  ],
+  "unique_hash_count": 5,
+  "validate_atlas": {
+    "ok": true,
+    "width": 1536,
+    "height": 1872,
+    "errors": [],
+    "warnings": [
+      "state 'idle' has no frames",
+      "state 'running-right' has no frames",
+      "state 'running-left' has no frames",
+      "state 'waving' has no frames",
+      "state 'failed' has no frames",
+      "state 'waiting' has no frames",
+      "state 'running' has no frames",
+      "state 'review' has no frames"
+    ],
+    "filled_states": [
+      "jumping"
+    ]
+  },
+  "atlas_fragment_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/jumping_row_atlas_fragment.png",
+  "contact_sheet_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/jumping_row_contact_sheet.png",
+  "gif_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-jump/assets/keyframes/jumping_row_preview.gif"
+}

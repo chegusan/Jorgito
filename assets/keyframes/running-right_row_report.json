@@ -1,0 +1,48 @@
+{
+  "state": "running-right",
+  "row_count": 8,
+  "row_pose_order": [
+    0,
+    1,
+    2,
+    2,
+    1,
+    0,
+    0,
+    1
+  ],
+  "frame_hashes": [
+    "931b89c80241ac0c",
+    "219b34bde37811c5",
+    "5fb4c87f2b011a20",
+    "2364b8c4efd6c783",
+    "cb9eeba612e9fdfd",
+    "e3a8385067718986",
+    "b850b8c8673616e7",
+    "d9b1ffe5f714ed65"
+  ],
+  "unique_hash_count": 8,
+  "validate_atlas": {
+    "ok": true,
+    "width": 1536,
+    "height": 1872,
+    "errors": [],
+    "warnings": [
+      "state 'idle' has no frames",
+      "state 'running-left' has no frames",
+      "state 'waving' has no frames",
+      "state 'jumping' has no frames",
+      "state 'failed' has no frames",
+      "state 'waiting' has no frames",
+      "state 'running' has no frames",
+      "state 'review' has no frames"
+    ],
+    "filled_states": [
+      "running-right"
+    ]
+  },
+  "atlas_fragment_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/running-right_row_atlas_fragment.png",
+  "contact_sheet_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/running-right_row_contact_sheet.png",
+  "gif_path": "/home/chegusan/SGTraining/Jorgito-worktrees/phase2b-pose-sequence-running-right/assets/keyframes/running-right_row_preview.gif",
+  "mirrored_from": "running-left"
+}
