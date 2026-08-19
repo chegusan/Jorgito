@@ -1,0 +1,171 @@
+{
+  "validate_atlas": {
+    "ok": true,
+    "width": 1536,
+    "height": 1872,
+    "errors": [],
+    "warnings": [],
+    "filled_states": [
+      "idle",
+      "running-right",
+      "running-left",
+      "waving",
+      "jumping",
+      "failed",
+      "waiting",
+      "running",
+      "review"
+    ]
+  },
+  "rows": {
+    "idle": {
+      "row": 0,
+      "count": 6,
+      "source": "atlas_full.png",
+      "source_row": 0,
+      "hashes": [
+        "ebf1855e47aae964",
+        "677c72e55c31afdb",
+        "fa942fdd69fe7a0f",
+        "fca2de9fff3fb265",
+        "b4777f8c59c32dda",
+        "169cc315454b0651"
+      ],
+      "unique_hash_count": 6,
+      "unique_within_row": true
+    },
+    "running-right": {
+      "row": 1,
+      "count": 8,
+      "source": "running-right_row_atlas_fragment.png",
+      "source_row": 1,
+      "hashes": [
+        "931b89c80241ac0c",
+        "219b34bde37811c5",
+        "5fb4c87f2b011a20",
+        "2364b8c4efd6c783",
+        "cb9eeba612e9fdfd",
+        "e3a8385067718986",
+        "b850b8c8673616e7",
+        "d9b1ffe5f714ed65"
+      ],
+      "unique_hash_count": 8,
+      "unique_within_row": true
+    },
+    "running-left": {
+      "row": 2,
+      "count": 8,
+      "source": "running-left_row_atlas_fragment.png",
+      "source_row": 2,
+      "hashes": [
+        "66a4efff9e43dac7",
+        "e48faf9d240f1a82",
+        "47f3603eae80713c",
+        "f305977021e0e636",
+        "0567bd6f6433cfb1",
+        "ff666d96621c61a4",
+        "e08a8d555c820d09",
+        "2d42602357e5db7b"
+      ],
+      "unique_hash_count": 8,
+      "unique_within_row": true
+    },
+    "waving": {
+      "row": 3,
+      "count": 4,
+      "source": "waving_row_atlas_fragment.png",
+      "source_row": 3,
+      "hashes": [
+        "00a8655454319163",
+        "3780b1da4b1b5c05",
+        "8e3f10e3943ac684",
+        "64aead8fc5ce9f05"
+      ],
+      "unique_hash_count": 4,
+      "unique_within_row": true
+    },
+    "jumping": {
+      "row": 4,
+      "count": 5,
+      "source": "jumping_row_atlas_fragment.png",
+      "source_row": 4,
+      "hashes": [
+        "6b29aab6a1a64086",
+        "330e2082e1f6c833",
+        "6132db1437cd8b6e",
+        "b35ef0eaef366846",
+        "7dc397020e1b42f6"
+      ],
+      "unique_hash_count": 5,
+      "unique_within_row": true
+    },
+    "failed": {
+      "row": 5,
+      "count": 8,
+      "source": "failed_row_atlas_fragment.png",
+      "source_row": 5,
+      "hashes": [
+        "88756f92b416e19a",
+        "b019552be7f98fbc",
+        "fbef9264dc07852a",
+        "6a6e4cbb1aadaf0d",
+        "73c34bd407d5cd57",
+        "98f7e9f91fcbb9d4",
+        "616b2918b58514b0",
+        "d75da4c563831207"
+      ],
+      "unique_hash_count": 8,
+      "unique_within_row": true
+    },
+    "waiting": {
+      "row": 6,
+      "count": 6,
+      "source": "waiting_row_atlas_fragment.png",
+      "source_row": 6,
+      "hashes": [
+        "d20da4762b777bd7",
+        "8e68447ef865b50f",
+        "0ed1208169dbf00b",
+        "b9177f31632bcb0d",
+        "180f3fe216b26ff1",
+        "c649d95a17bbd0e1"
+      ],
+      "unique_hash_count": 6,
+      "unique_within_row": true
+    },
+    "running": {
+      "row": 7,
+      "count": 6,
+      "source": "atlas_full.png",
+      "source_row": 7,
+      "hashes": [
+        "88b865b6dc608e79",
+        "89656393f19a72f2",
+        "401b63ad052f3e89",
+        "c616a8dd7616c457",
+        "ddd8eb638d839443",
+        "af3f499f8da99ce5"
+      ],
+      "unique_hash_count": 6,
+      "unique_within_row": true
+    },
+    "review": {
+      "row": 8,
+      "count": 6,
+      "source": "review_row_atlas_fragment.png",
+      "source_row": 8,
+      "hashes": [
+        "fd6e4f6455889d04",
+        "e1479549f5bf67b3",
+        "ebd74364db9e3ff6",
+        "e91911268077781b",
+        "8bf546ebff5d0e11",
+        "3bc84d95348d49fe"
+      ],
+      "unique_hash_count": 6,
+      "unique_within_row": true
+    }
+  },
+  "all_rows_unique": true,
+  "states_filled": 9
+}
