@@ -8,12 +8,12 @@ non-mirrored row (8 image-generation calls) in one pass. Phase 1's budget is
 this script drives the same building blocks directly, grounded on
 ``assets/reference/jorgito_canonical.png``.
 
-Run with the Hermes venv, HERMES_HOME pointed at the isolated test profile:
+Run with the Hermes venv, HERMES_HOME pointed at the isolated test profile
+(HERMES_AGENT_SRC overrides the Hermes source location; see scripts/hermes_env.py):
 
-    HERMES_HOME=/home/chegusan/.hermes-jorgito-test \
-        /home/chegusan/.hermes/hermes-agent/venv/bin/python3 \
-        -c "import sys; sys.path.insert(0, '/home/chegusan/.hermes/hermes-agent')" \
-        scripts/generate_phase1.py
+    HERMES_HOME=/path/to/isolated-profile \
+        HERMES_AGENT_SRC=/path/to/hermes-agent \
+        /path/to/hermes-agent/venv/bin/python3 scripts/generate_phase1.py
 """
 
 from __future__ import annotations
@@ -22,9 +22,10 @@ import json
 import sys
 from pathlib import Path
 
-HERMES_SRC = Path("/home/chegusan/.hermes/hermes-agent")
-if str(HERMES_SRC) not in sys.path:
-    sys.path.insert(0, str(HERMES_SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hermes_env import ensure_hermes_on_path  # noqa: E402
+
+ensure_hermes_on_path()
 
 from agent.pet.generate import atlas, imagegen, prompts  # noqa: E402
 

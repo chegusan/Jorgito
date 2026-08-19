@@ -15,8 +15,6 @@ Outputs:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from keyframe_processing import REPO, build_contact_sheet, process_states
 
 CONTACT_SHEET = REPO / "assets/keyframes/contact_sheet_phase1.png"

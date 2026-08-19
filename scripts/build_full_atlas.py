@@ -8,9 +8,10 @@ Pure image processing -- no HERMES_HOME / pet-store writes here (that's
 PHASE_0_RESULT.md's recommendation -- not a project-invented one), and builds
 the final 9-state contact sheet for the user's visual gate.
 
-Usage:
-    /home/chegusan/.hermes/hermes-agent/venv/bin/python3 \\
-        scripts/build_full_atlas.py
+Usage (set HERMES_AGENT_SRC if your Hermes checkout is not at the default in
+scripts/hermes_env.py):
+    HERMES_AGENT_SRC=/path/to/hermes-agent \\
+        /path/to/hermes-agent/venv/bin/python3 scripts/build_full_atlas.py
 """
 
 from __future__ import annotations
@@ -19,13 +20,10 @@ import json
 import sys
 from pathlib import Path
 
-HERMES_SRC = Path("/home/chegusan/.hermes/hermes-agent")
-if str(HERMES_SRC) not in sys.path:
-    sys.path.insert(0, str(HERMES_SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hermes_env import ensure_hermes_on_path  # noqa: E402
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+ensure_hermes_on_path()
 
 import full_atlas  # noqa: E402
 from keyframe_processing import build_contact_sheet  # noqa: E402

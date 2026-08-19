@@ -15,13 +15,13 @@ Requires HERMES_HOME set by the caller (isolated test profile).
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
-HERMES_SRC = Path("/home/chegusan/.hermes/hermes-agent")
-if str(HERMES_SRC) not in sys.path:
-    sys.path.insert(0, str(HERMES_SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hermes_env import ensure_hermes_on_path, require_isolated_hermes_home  # noqa: E402
+
+ensure_hermes_on_path()
 
 from agent.pet import store  # noqa: E402
 from agent.pet.constants import DEFAULT_SCALE, cols_for_scale  # noqa: E402
@@ -67,13 +67,7 @@ def _render_state_preview(renderer: PetRenderer, state: str, cols: int) -> Image
 
 
 def main() -> None:
-    hermes_home = os.environ.get("HERMES_HOME", "").strip()
-    if not hermes_home:
-        print("ERROR: HERMES_HOME must be set (isolated test profile).", file=sys.stderr)
-        sys.exit(1)
-    if Path(hermes_home).resolve() == Path.home().resolve() / ".hermes":
-        print("ERROR: refusing to run against the real ~/.hermes profile.", file=sys.stderr)
-        sys.exit(1)
+    require_isolated_hermes_home()
 
     pet = store.load_pet("jorgito")
     if pet is None or not pet.exists:
