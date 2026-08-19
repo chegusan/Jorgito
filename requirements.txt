@@ -1,0 +1,7 @@
+# Runtime dependencies for the Jorgito asset-pipeline scripts (scripts/).
+#
+# NOTE: the scripts also import the upstream Hermes agent source
+# (`agent.pet.*`). That is NOT a PyPI package — it is provisioned separately
+# (its location is resolved at the top of each script). See AUDIT_REPORT.md
+# F-1/F-3 for the portability and version-pinning follow-ups.
+Pillow>=10,<13
